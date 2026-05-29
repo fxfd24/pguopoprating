@@ -11,14 +11,14 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4 # Обновили до v4
+      uses: actions/checkout@v4
 
     - name: Deploy to Server via rsync
       uses: easingthemes/ssh-deploy@v4
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        REMOTE_HOST: ${{ secrets.SSH_HOST }}
-        REMOTE_USER: ${{ secrets.SSH_USERNAME }}
-        TARGET: /var/www/pguopoprating/
+        REMOTE_HOST: "5.181.253.175"  # Прописали IP явно
+        REMOTE_USER: "root"            # Прописали пользователя явно
+        TARGET: "/var/www/pguopoprating/"
         SOURCE: "./"
-        EXCLUDE: "/.git/, /.github/" # Исправлено: разделили через запятую
+        EXCLUDE: "/.git/, /.github/"
