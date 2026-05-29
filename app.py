@@ -20,6 +20,17 @@ class StudentVote(BaseModel):
     q4: int
     q5: int
 
+class AuthRequest(BaseModel):
+    role: str
+    password: str
+
+# Статические пароли для доступа к закрытым разделам
+PASSWORDS = {
+    "expert": "opop2026!",   # Пароль для Деканов и Зав. Кафедрами
+    "manager": "opop2026!", # Пароль для Начальника управления
+    "admin": "admin_opop2026!"      # Пароль для входа в Админ-панель (Аналитика)
+}
+
 class ExpertVote(BaseModel):
     specialty_id: int
     evaluator_name: str
@@ -310,6 +321,17 @@ def get_specialties(db: sqlite3.Connection = Depends(get_db)):
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
 
+@app.post("/api/auth/verify")
+def verify_password(data: AuthRequest):
+    correct_password = PASSWORDS.get(data.role)
+    if not correct_password:
+        raise HTTPException(status_code=400, detail="Неверная роль")
+    
+    if data.password == correct_password:
+        return {"status": "success", "authenticated": True}
+    else:
+        return {"status": "error", "authenticated": False, "message": "Неверный пароль доступа"}
+        
 # Получить списки экспертов
 @app.get("/api/experts")
 def get_experts(db: sqlite3.Connection = Depends(get_db)):

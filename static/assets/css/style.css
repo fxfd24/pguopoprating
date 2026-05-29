@@ -1,20 +1,39 @@
-/* Глобальный градиентный фон для всех страниц */
+/* Общие стили для всего проекта */
 body {
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+    background: #eef2f7;
+    overflow-x: hidden;
+    position: relative;
 }
 
-/* Эффект матового стекла (Glassmorphism) для карточек */
+/* Эффект матового стекла (Premium Glassmorphism) */
 .glass-card {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
 }
 
-/* Дополнительные утилиты плавности */
-.fade-enter-active, .fade-leave-active {
-    transition: opacity 0.3s ease;
+/* Декоративные размытые светящиеся круги на фоне */
+.bg-blob {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.25;
+    z-index: -10;
+    pointer-events: none;
 }
-.fade-enter-from, .fade-leave-to {
-    opacity: 0;
+
+.blob-indigo {
+    background: #6366f1;
+    top: -150px;
+    left: -150px;
+}
+
+.blob-purple {
+    background: #a855f7;
+    bottom: -150px;
+    right: -150px;
 }

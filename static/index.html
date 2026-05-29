@@ -4,23 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система оценки ОПОП | ПГУ</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Подключение внешнего файла общих стилей -->
+    <!-- Подключаем чистый Tailwind CSS v2 без JS-компилятора и предупреждений в консоли -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Общие стили проекта -->
     <link rel="stylesheet" href="/assets/css/style.css">
     <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="min-h-screen flex flex-col justify-between text-gray-800 font-sans">
 
+    <!-- Декоративные фоновые элементы для Glassmorphism -->
+    <div class="bg-blob blob-indigo"></div>
+    <div class="bg-blob blob-purple"></div>
+
     <!-- Хедер -->
     <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-200">
+            <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg">
                 <i class="fa-solid fa-graduation-cap text-xl"></i>
             </div>
             <div>
-                <span class="font-bold text-lg tracking-wide text-indigo-950 block">ОЦЕНКА ОПОП</span>
+                <span class="font-bold text-lg tracking-wide text-indigo-900 block">ОЦЕНКА ОПОП</span>
                 <span class="text-xs text-gray-500 uppercase font-semibold">Пятигорский государственный университет</span>
             </div>
         </div>
@@ -30,7 +34,7 @@
     <main class="flex-grow flex items-center justify-center px-4 py-8">
         <div class="max-w-4xl w-full">
             <div class="text-center mb-12">
-                <h1 class="text-4xl font-extrabold text-indigo-950 tracking-tight sm:text-5xl mb-4">
+                <h1 class="text-4xl font-extrabold text-indigo-900 tracking-tight sm:text-5xl mb-4">
                     Оценка качества образовательных программ
                 </h1>
                 <p class="text-lg text-gray-600 max-w-2xl mx-auto">
@@ -47,7 +51,7 @@
                         <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
                             <i class="fa-solid fa-user-graduate text-xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Обучающийся</h3>
+                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Обучающийся</h3>
                         <p class="text-sm text-gray-500 leading-relaxed">
                             Оценка руководителя образовательной программы студентами всех курсов.
                         </p>
@@ -63,7 +67,7 @@
                         <div class="bg-indigo-100 text-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
                             <i class="fa-solid fa-user-tie text-xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Декан</h3>
+                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Декан</h3>
                         <p class="text-sm text-gray-500 leading-relaxed">
                             Оценка деятельности руководителей в ролях Наставника и Администратора.
                         </p>
@@ -79,7 +83,7 @@
                         <div class="bg-violet-100 text-violet-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
                             <i class="fa-solid fa-chalkboard-user text-xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Зав. кафедрой</h3>
+                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Зав. кафедрой</h3>
                         <p class="text-sm text-gray-500 leading-relaxed">
                             Оценка качества учебно-методической работы и поддержки адаптации.
                         </p>
@@ -95,7 +99,7 @@
                         <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
                             <i class="fa-solid fa-sliders text-xl"></i>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Нач. управления</h3>
+                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Нач. управления</h3>
                         <p class="text-sm text-gray-500 leading-relaxed">
                             Выставление критерия K_сроки по всем направлениям подготовки.
                         </p>
@@ -105,13 +109,6 @@
                     </span>
                 </a>
 
-            </div>
-            
-            <div class="text-center mt-12">
-                <a href="/admin.html" class="inline-flex items-center space-x-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Вход в панель администратора (Аналитика)</span>
-                </a>
             </div>
         </div>
     </main>
