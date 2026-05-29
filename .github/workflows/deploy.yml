@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+# Добавили переменную, чтобы убрать желтое предупреждение Node.js 20
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,7 +25,7 @@ jobs:
         REMOTE_USER: "root"
         TARGET: "/var/www/pguopoprating/"
         SOURCE: "./"
-        EXCLUDE: "/venv/, /.git/, /.github/" # Исключаем локальный venv при копировании
+        EXCLUDE: "/venv/, /.git/, /.github/"
 
     - name: Execute remote SSH commands
       uses: appleboy/ssh-action@v1.0.3
@@ -30,11 +34,6 @@ jobs:
         username: "root"
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
-          # 1. Устанавливаем зависимости из обновленного requirements.txt в серверный venv
           /var/www/pguopoprating/venv/bin/pip install -r /var/www/pguopoprating/requirements.txt
-          
-          # 2. Перезапускаем системную службу, чтобы применился новый python-код
           systemctl restart pguopoprating
-          
-          # 3. Делаем службу активной по умолчанию
           systemctl enable pguopoprating
