@@ -2,30 +2,133 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Рейтинг ОПОП</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система оценки ОПОП | ПГУ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome для красивых иконок -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background-color: #f0f2f5;
-            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
         }
-        .card {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            text-align: center;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
         }
     </style>
 </head>
-<body>
-    <div class="card">
-        <h1>Система оценки ОПОП</h1>
-        <p>Сайт находится в стадии разработки.</p>
-    </div>
+<body class="min-h-screen flex flex-col justify-between text-gray-800 font-sans">
+
+    <!-- Хедер -->
+    <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-indigo-200">
+                <i class="fa-solid fa-graduation-cap text-xl"></i>
+            </div>
+            <div>
+                <span class="font-bold text-lg tracking-wide text-indigo-950 block">ОЦЕНКА ОПОП</span>
+                <span class="text-xs text-gray-500 uppercase font-semibold">Пятигорский государственный университет</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной блок выбора роли -->
+    <main class="flex-grow flex items-center justify-center px-4 py-8">
+        <div class="max-w-4xl w-full">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-extrabold text-indigo-950 tracking-tight sm:text-5xl mb-4">
+                    Оценка качества образовательных программ
+                </h1>
+                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                    Пожалуйста, выберите вашу роль в системе для перехода к заполнению анкеты оценки руководителей ОПОП.
+                </p>
+            </div>
+
+            <!-- Сетка ролей -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Карта: Студент -->
+                <a href="/student.html" class="glass-card p-6 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col justify-between text-left group">
+                    <div>
+                        <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+                            <i class="fa-solid fa-user-graduate text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Обучающийся</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">
+                            Оценка руководителя образовательной программы студентами всех курсов.
+                        </p>
+                    </div>
+                    <span class="mt-6 text-sm font-semibold text-blue-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        Начать опрос <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </span>
+                </a>
+
+                <!-- Карта: Декан -->
+                <a href="/expert.html?role=dean" class="glass-card p-6 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col justify-between text-left group">
+                    <div>
+                        <div class="bg-indigo-100 text-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
+                            <i class="fa-solid fa-user-tie text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Декан</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">
+                            Оценка деятельности руководителей в ролях Наставника и Администратора.
+                        </p>
+                    </div>
+                    <span class="mt-6 text-sm font-semibold text-indigo-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        Перейти к оценке <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </span>
+                </a>
+
+                <!-- Карта: Зав. кафедрой -->
+                <a href="/expert.html?role=hod" class="glass-card p-6 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col justify-between text-left group">
+                    <div>
+                        <div class="bg-violet-100 text-violet-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
+                            <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Зав. кафедрой</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">
+                            Оценка качества учебно-методической работы и поддержки адаптации.
+                        </p>
+                    </div>
+                    <span class="mt-6 text-sm font-semibold text-violet-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        Перейти к оценке <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </span>
+                </a>
+
+                <!-- Карта: Начальник управления -->
+                <a href="/manager.html" class="glass-card p-6 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex flex-col justify-between text-left group">
+                    <div>
+                        <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
+                            <i class="fa-solid fa-sliders text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-indigo-950 mb-2">Нач. управления</h3>
+                        <p class="text-sm text-gray-500 leading-relaxed">
+                            Выставление критерия K_сроки по всем направлениям подготовки.
+                        </p>
+                    </div>
+                    <span class="mt-6 text-sm font-semibold text-purple-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        Заполнить K_сроки <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </span>
+                </a>
+
+            </div>
+            
+            <div class="text-center mt-12">
+                <a href="/admin.html" class="inline-flex items-center space-x-2 text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Вход в панель администратора (Аналитика)</span>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Футер -->
+    <footer class="w-full text-center py-6 text-xs text-gray-400 border-t border-gray-200/50 mt-12">
+        &copy; 2026 Пятигорский государственный университет. Все права защищены.
+    </footer>
+
 </body>
 </html>
