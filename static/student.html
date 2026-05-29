@@ -6,20 +6,10 @@
     <title>Анкета обучающегося | Оценка ОПОП</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <!-- Общие стили проекта -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.45);
-        }
-    </style>
 </head>
 <body class="min-h-screen py-8 px-4 text-gray-800">
 
@@ -32,7 +22,7 @@
         </a>
 
         <!-- Успешная отправка -->
-        <div v-if="submitted" class="glass-card rounded-3xl p-8 text-center shadow-xl border border-white/40 transform transition-all animate-bounce">
+        <div v-if="submitted" class="glass-card rounded-3xl p-8 text-center shadow-xl border border-white/40 transform transition-all">
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fa-solid fa-check text-2xl"></i>
             </div>
@@ -87,7 +77,7 @@
                 </div>
             </div>
 
-            <!-- Шаг 2: Вопросы анкеты (отображаются только после выбора специальности) -->
+            <!-- Шаг 2: Вопросы анкеты -->
             <div v-if="selectedSpec" class="space-y-8">
                 
                 <div v-for="(q, idx) in questions" :key="idx" class="bg-white/40 p-5 rounded-2xl border border-white/50">
@@ -95,7 +85,6 @@
                         <span class="text-indigo-600 mr-1">Вопрос {{ idx + 1 }}.</span> {{ q.text }}
                     </p>
                     
-                    <!-- Варианты ответов 2 - 5 -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <button v-for="score in [2, 3, 4, 5]" 
                                 :key="score"
@@ -128,125 +117,8 @@
 
     </div>
 
-    <!-- Логика работы страницы -->
-    <script>
-        const { createApp, ref, computed, onMounted } = Vue;
-
-        createApp({
-            setup() {
-                const specialties = ref([]);
-                const searchQuery = ref('');
-                const showDropdown = ref(false);
-                const selectedSpec = ref(null);
-                const loading = ref(false);
-                const submitted = ref(false);
-
-                // Оценки по вопросам
-                const answers = ref({
-                    q1: null,
-                    q2: null,
-                    q3: null,
-                    q4: null,
-                    q5: null
-                });
-
-                const questions = [
-                    { text: "Руководитель образовательной программы помогает мне с адаптацией к образовательному процессу в университете; он(она) дает понятные и полезные ответы на организационные вопросы." },
-                    { text: "Руководитель образовательной программы информирует о дополнительных возможностях (участии в конкурсах/конференциях/проектах, о перспективных образовательных траекториях и программах дополнительного образования, др.), исходя из моих образовательных и профессиональных интересов." },
-                    { text: "Консультации руководителя образовательной программы перед практикой были полезны, и я был(а) уверен(а), что в случае возникновения проблем могу обратиться к нему(ней) за оперативной помощью." },
-                    { text: "Руководитель образовательной программы лично активно участвует в организации профориентационных мероприятий (лекций с приглашенными экспертами, экскурсий на предприятия, встреч с успешными выпускниками программы и др.), делая их интересными и полезными для моего профессионального роста." },
-                    { text: "В общении с руководителем образовательной программы нет равнодушия; я всегда уверен(а), что получу не просто формальный ответ, а реальную поддержку и совет." }
-                ];
-
-                const scoreLabels = {
-                    2: "Однозначно нет",
-                    3: "Скорее нет, чем да",
-                    4: "Скорее да, чем нет",
-                    5: "Однозначно да"
-                };
-
-                // Загрузка специальностей при монтировании страницы
-                onMounted(async () => {
-                    try {
-                        const response = await fetch('/api/specialties');
-                        specialties.value = await response.json();
-                    } catch (error) {
-                        console.error("Ошибка при получении списка направлений:", error);
-                    }
-                });
-
-                // Поиск по коду, названию или ФИО руководителя
-                const filteredSpecialties = computed(() => {
-                    if (!searchQuery.value) return [];
-                    const q = searchQuery.value.toLowerCase();
-                    return specialties.value.filter(s => 
-                        s.code.toLowerCase().includes(q) || 
-                        s.name.toLowerCase().includes(q) ||
-                        s.supervisor_name.toLowerCase().includes(q)
-                    );
-                });
-
-                const selectSpecialty = (spec) => {
-                    selectedSpec.value = spec;
-                    searchQuery.value = `${spec.code} ${spec.name}`;
-                    showDropdown.value = false;
-                };
-
-                // Проверка: все ли вопросы оценены
-                const isFormValid = computed(() => {
-                    return selectedSpec.value && 
-                           answers.value.q1 && 
-                           answers.value.q2 && 
-                           answers.value.q3 && 
-                           answers.value.q4 && 
-                           answers.value.q5;
-                });
-
-                // Отправка формы бэкенду
-                const submitVote = async () => {
-                    if (!isFormValid.value) return;
-                    loading.value = true;
-                    try {
-                        const response = await fetch('/api/vote/student', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                specialty_id: selectedSpec.value.id,
-                                ...answers.value
-                            })
-                        });
-                        const res = await response.json();
-                        if (res.status === 'success') {
-                            submitted.value = true;
-                        } else {
-                            alert("Произошла ошибка при сохранении голоса");
-                        }
-                    } catch (err) {
-                        console.error(err);
-                        alert("Ошибка отправки данных на сервер");
-                    } finally {
-                        loading.value = false;
-                    }
-                };
-
-                return {
-                    searchQuery,
-                    showDropdown,
-                    filteredSpecialties,
-                    selectedSpec,
-                    selectSpecialty,
-                    questions,
-                    scoreLabels,
-                    answers,
-                    isFormValid,
-                    loading,
-                    submitted,
-                    submitVote
-                };
-            }
-        }).mount('#app');
-    </script>
+    <!-- Подключение библиотек и внешней логики -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="/assets/js/student.js"></script>
 </body>
 </html>
