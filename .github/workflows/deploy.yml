@@ -13,12 +13,28 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v4
 
-    - name: Deploy to Server via rsync
+    - name: Deploy files via rsync
       uses: easingthemes/ssh-deploy@v4
       with:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        REMOTE_HOST: "5.181.253.175"  # Прописали IP явно
-        REMOTE_USER: "root"            # Прописали пользователя явно
+        REMOTE_HOST: "5.181.253.175"
+        REMOTE_USER: "root"
         TARGET: "/var/www/pguopoprating/"
         SOURCE: "./"
-        EXCLUDE: "/.git/, /.github/"
+        EXCLUDE: "/venv/, /.git/, /.github/" # Исключаем локальный venv при копировании
+
+    - name: Execute remote SSH commands
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: "5.181.253.175"
+        username: "root"
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          # 1. Устанавливаем зависимости из обновленного requirements.txt в серверный venv
+          /var/www/pguopoprating/venv/bin/pip install -r /var/www/pguopoprating/requirements.txt
+          
+          # 2. Перезапускаем системную службу, чтобы применился новый python-код
+          systemctl restart pguopoprating
+          
+          # 3. Делаем службу активной по умолчанию
+          systemctl enable pguopoprating
