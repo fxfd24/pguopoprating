@@ -4,52 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель эксперта | Оценка ОПОП</title>
-    <!-- Чистый Tailwind CSS v2 -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Общие объемные стили проекта -->
     <link rel="stylesheet" href="/assets/css/style.css">
-    <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/assets/js/shared.js"></script>
 </head>
-<body class="py-8 px-4 text-gray-800">
+<body class="py-8 px-4">
 
-    <div id="app" class="max-w-4xl mx-auto">
+    <div class="glass-blob blob-light-1"></div>
+    <div class="glass-blob blob-light-2"></div>
+    <div class="glass-blob blob-light-3"></div>
+
+    <div id="app" v-cloak class="max-w-4xl mx-auto">
         
         <!-- Кнопка Назад -->
-        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-6">
+        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6 font-semibold">
             <i class="fa-solid fa-arrow-left"></i>
-            <span>На главную</span>
+            <span>{{ t.goHome }}</span>
         </a>
 
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative">
-                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-indigo-950 mb-2">Доступ ограничен</h2>
-                <p class="text-sm text-gray-500 mb-6">Пожалуйста, введите пароль доступа для экспертов (Деканов / Зав. кафедрами).</p>
+                <h2 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.accessDenied }}</h2>
+                <p class="text-sm mb-6" style="color: var(--text-secondary)">{{ t.enterPassword }}</p>
                 
                 <div class="space-y-4">
-                    <input type="password" 
+                    <!-- Заменили type="password" на type="text" + secure-input, чтобы браузер не предлагал сохранение -->
+                    <input type="text" 
                            v-model="passwordInput" 
                            @keyup.enter="verifyPassword"
-                           placeholder="Введите пароль..." 
-                           class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-center font-semibold">
+                           :placeholder="t.passwordPlaceholder" 
+                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold secure-input">
                     
                     <button @click="verifyPassword"
                             :disabled="authLoading"
-                            class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-bold shadow-md transition-all">
-                        <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> Проверка...</span>
-                        <span v-else>Войти в панель</span>
+                            class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 text-white dark:text-black py-3 rounded-xl font-bold shadow-md transition-all">
+                        <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
+                        <span v-else>{{ t.loginBtn }}</span>
                     </button>
                     <p v-if="authError" class="text-xs text-red-500 font-semibold mt-2">{{ authError }}</p>
 
                     <!-- Кнопка возврата назад на главную -->
-                    <div class="pt-4 border-t border-gray-100/50 mt-4">
-                        <a href="/" class="inline-flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-indigo-600 transition-colors">
+                    <div class="pt-4 border-t border-gray-200/20 mt-4">
+                        <a href="/" class="inline-flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                             <i class="fa-solid fa-arrow-left"></i>
-                            <span>Вернуться на главную</span>
+                            <span>{{ t.goHomeBtn }}</span>
                         </a>
                     </div>
                 </div>
@@ -64,30 +67,30 @@
                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <i class="fa-solid fa-check text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-indigo-950 mb-2">Оценка успешно сохранена!</h2>
-                <p class="text-gray-600 mb-6">Ваши оценки руководителю программы приняты бэкендом системы.</p>
-                <button @click="resetForm" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-md transition-all">Оценить еще одного руководителя</button>
+                <h2 class="text-2xl font-bold mb-2" style="color: var(--text-main)">Оценка успешно сохранена!</h2>
+                <p class="mb-6" style="color: var(--text-secondary)">Ваши оценки руководителю программы приняты бэкендом системы.</p>
+                <button @click="resetForm" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-md transition-all">Оценить еще одного руководителя</button>
             </div>
 
             <!-- Форма заполнения -->
             <div v-else class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl">
                 <div class="border-b border-gray-200/50 pb-6 mb-6">
-                    <h1 class="text-2xl font-extrabold text-indigo-950 mb-2">Оценка руководителя ОПОП экспертом</h1>
-                    <p class="text-sm text-gray-500">Заполните блоки вопросов для ролей «Наставник» и «Администратор» по выбранному направлению.</p>
+                    <h1 class="text-2xl font-extrabold mb-2" style="color: var(--text-main)">Оценка руководителя ОПОП экспертом</h1>
+                    <p class="text-sm" style="color: var(--text-secondary)">Заполните блоки вопросов для ролей «Наставник» и «Администратор» по выбранному направлению.</p>
                 </div>
 
                 <!-- Шаг 1: Кто оценивает -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div>
-                        <label class="block text-sm font-bold text-indigo-950 mb-2">1. Ваша роль</label>
+                        <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">1. Ваша роль</label>
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="setRole('dean')" 
-                                    :class="[roleType === 'dean' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-indigo-50']"
+                                    :class="[roleType === 'dean' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900']"
                                     class="border py-3 rounded-xl text-center text-sm font-semibold transition-all">
                                 Декан
                             </button>
                             <button @click="setRole('hod')" 
-                                    :class="[roleType === 'hod' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-gray-700 border-gray-200 hover:bg-indigo-50']"
+                                    :class="[roleType === 'hod' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900']"
                                     class="border py-3 rounded-xl text-center text-sm font-semibold transition-all">
                                 Зав. кафедрой
                             </button>
@@ -95,9 +98,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold text-indigo-950 mb-2">2. Ваше имя (выберите из списка)</label>
+                        <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">2. Ваше имя (выберите из списка)</label>
                         <select v-model="selectedEvaluator" 
-                                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                                class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                             <option value="" disabled>-- Выберите ФИО --</option>
                             <option v-for="name in currentEvaluatorsList" :key="name" :value="name">{{ name }}</option>
                         </select>
@@ -106,34 +109,33 @@
 
                 <!-- Шаг 2: Какое направление оцениваем -->
                 <div class="mb-8" v-if="selectedEvaluator">
-                    <label class="block text-sm font-bold text-indigo-950 mb-2">3. Направление подготовки (поиск по коду/названию)</label>
+                    <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">3. Направление подготовки (поиск по коду/названию)</label>
                     <div class="relative">
                         <input type="text" 
                                v-model="searchQuery" 
                                @focus="showDropdown = true"
                                placeholder="Введите код или название ОПОП..." 
-                               class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                               class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                         
-                        <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                        <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
                                  @click="selectSpecialty(spec)"
-                                 class="px-4 py-3 hover:bg-indigo-50 cursor-pointer text-sm border-b border-gray-50 last:border-none">
-                                <div class="font-bold text-indigo-950">{{ spec.code }} {{ spec.name }}</div>
-                                <div class="text-xs text-gray-500 mt-0.5">Руководитель: <span class="font-semibold text-indigo-600">{{ spec.supervisor_name }}</span></div>
+                                 class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
+                                <div class="font-bold text-gray-950 dark:text-gray-100">{{ spec.code }} {{ spec.name }}</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Карточка выбранной специальности -->
-                    <div v-if="selectedSpec" class="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-between animate-fade-in">
+                    <div v-if="selectedSpec" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl flex items-center justify-between animate-fade-in">
                         <div>
-                            <div class="font-bold text-indigo-950 text-sm">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
-                            <div class="text-xs text-gray-600 mt-1">Институт: {{ selectedSpec.institute }}</div>
+                            <div class="font-bold text-sm" style="color: var(--text-main)">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
+                            <div class="text-xs mt-1" style="color: var(--text-secondary)">Институт: {{ selectedSpec.institute }}</div>
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-400 uppercase">Оцениваемый руководитель</div>
-                            <div class="font-bold text-indigo-600">{{ selectedSpec.supervisor_name }}</div>
+                            <div class="font-bold text-black dark:text-white">{{ selectedSpec.supervisor_name }}</div>
                         </div>
                     </div>
                 </div>
@@ -143,19 +145,19 @@
                     
                     <!-- БЛОК А: НАСТАВНИК -->
                     <div class="border-t border-gray-200/50 pt-6">
-                        <h2 class="text-lg font-bold text-indigo-950 mb-4 inline-flex items-center">
-                            <span class="bg-indigo-100 text-indigo-600 px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
+                        <h2 class="text-lg font-bold mb-4 inline-flex items-center" style="color: var(--text-main)">
+                            <span class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
                             Деятельность в роли Наставника ОПОП
                         </h2>
                         
                         <div class="space-y-6">
-                            <div v-for="(q, idx) in currentQuestions.nast" :key="idx" class="bg-white p-5 rounded-2xl border border-white shadow-sm">
-                                <p class="font-bold text-indigo-950 text-sm mb-4">{{ q }}</p>
+                            <div v-for="(q, idx) in currentQuestions.nast" :key="idx" class="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-white dark:border-gray-800">
+                                <p class="font-bold text-sm mb-4" style="color: var(--text-main)">{{ q }}</p>
                                 <div class="flex space-x-2">
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
                                             @click="nastAnswers[idx] = score"
-                                            :class="[nastAnswers[idx] === score ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-indigo-50']"
+                                            :class="[nastAnswers[idx] === score ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-250']"
                                             class="w-12 h-10 rounded-lg text-center font-bold text-sm transition-all focus:outline-none">
                                         {{ score }}
                                     </button>
@@ -166,19 +168,19 @@
 
                     <!-- БЛОК Б: АДМИНИСТРАТОР -->
                     <div class="border-t border-gray-200/50 pt-8">
-                        <h2 class="text-lg font-bold text-indigo-950 mb-4 inline-flex items-center">
-                            <span class="bg-purple-100 text-purple-600 px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
+                        <h2 class="text-lg font-bold mb-4 inline-flex items-center" style="color: var(--text-main)">
+                            <span class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
                             Деятельность в роли Администратора ОПОП
                         </h2>
                         
                         <div class="space-y-6">
-                            <div v-for="(q, idx) in currentQuestions.admin" :key="idx" class="bg-white p-5 rounded-2xl border border-white shadow-sm">
-                                <p class="font-bold text-indigo-950 text-sm mb-4">{{ q }}</p>
+                            <div v-for="(q, idx) in currentQuestions.admin" :key="idx" class="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-white dark:border-gray-800">
+                                <p class="font-bold text-sm mb-4" style="color: var(--text-main)">{{ q }}</p>
                                 <div class="flex space-x-2">
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
                                             @click="adminAnswers[idx] = score"
-                                            :class="[adminAnswers[idx] === score ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-indigo-50']"
+                                            :class="[adminAnswers[idx] === score ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-250']"
                                             class="w-12 h-10 rounded-lg text-center font-bold text-sm transition-all focus:outline-none">
                                         {{ score }}
                                     </button>
@@ -191,8 +193,8 @@
                     <div class="pt-6 border-t border-gray-200/50">
                         <button @click="submitEvaluation"
                                 :disabled="!isFormValid || loading"
-                                class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center space-x-2">
-                            <span v-if="loading"><i class="fa-solid fa-spinner animate-spin"></i> Сохранение...</span>
+                                class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 disabled:cursor-not-allowed text-white dark:text-black py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center space-x-2">
+                            <span v-if="loading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
                             <span v-else><i class="fa-solid fa-check-double mr-2"></i>Сохранить все оценки</span>
                         </button>
                     </div>
@@ -204,7 +206,6 @@
 
     </div>
 
-    <!-- Подключаем Vue 3 Prod и Логику -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="/assets/js/expert.js"></script>
 </body>

@@ -4,52 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель Начальника управления | Оценка ОПОП</title>
-    <!-- Чистый Tailwind CSS v2 -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Общие объемные стили проекта -->
     <link rel="stylesheet" href="/assets/css/style.css">
-    <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/assets/js/shared.js"></script>
 </head>
 <body class="py-8 px-4 text-gray-800">
 
-    <div id="app" class="max-w-5xl mx-auto">
+    <div class="glass-blob blob-light-1"></div>
+    <div class="glass-blob blob-light-2"></div>
+    <div class="glass-blob blob-light-3"></div>
+
+    <div id="app" v-cloak class="max-w-5xl mx-auto">
         
         <!-- Кнопка Назад -->
-        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-6">
+        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6 font-semibold">
             <i class="fa-solid fa-arrow-left"></i>
-            <span>На главную</span>
+            <span>{{ t.goHome }}</span>
         </a>
 
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative">
-                <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
-                <h2 class="text-xl font-bold text-indigo-950 mb-2">Доступ ограничен</h2>
-                <p class="text-sm text-gray-500 mb-6">Пожалуйста, введите пароль доступа для Начальника управления.</p>
+                <h2 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.accessDenied }}</h2>
+                <p class="text-sm mb-6" style="color: var(--text-secondary)">Пожалуйста, введите пароль доступа для Начальника управления.</p>
                 
                 <div class="space-y-4">
-                    <input type="password" 
+                    <!-- type="text" + secure-input убирает автосохранение браузера -->
+                    <input type="text" 
                            v-model="passwordInput" 
                            @keyup.enter="verifyPassword"
-                           placeholder="Введите пароль..." 
-                           class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm text-center font-semibold">
+                           :placeholder="t.passwordPlaceholder" 
+                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold secure-input">
                     
                     <button @click="verifyPassword"
                             :disabled="authLoading"
-                            class="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 text-white py-3 rounded-xl font-bold shadow-md transition-all">
-                        <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> Проверка...</span>
-                        <span v-else>Войти в панель</span>
+                            class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 text-white dark:text-black py-3 rounded-xl font-bold shadow-md transition-all">
+                        <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
+                        <span v-else>{{ t.loginBtn }}</span>
                     </button>
                     <p v-if="authError" class="text-xs text-red-500 font-semibold mt-2">{{ authError }}</p>
 
                     <!-- Кнопка возврата назад на главную -->
-                    <div class="pt-4 border-t border-gray-100/50 mt-4">
-                        <a href="/" class="inline-flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-purple-600 transition-colors">
+                    <div class="pt-4 border-t border-gray-200/20 mt-4">
+                        <a href="/" class="inline-flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white transition-colors">
                             <i class="fa-solid fa-arrow-left"></i>
-                            <span>Вернуться на главную</span>
+                            <span>{{ t.goHomeBtn }}</span>
                         </a>
                     </div>
                 </div>
@@ -60,8 +63,8 @@
         <div v-else class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200/50 pb-6 mb-6">
                 <div>
-                    <h1 class="text-2xl font-extrabold text-indigo-950 mb-1">Выставление критерия K_сроки</h1>
-                    <p class="text-sm text-gray-500">Укажите оценки своевременности (от 2 до 5) для руководителей ОПОП.</p>
+                    <h1 class="text-2xl font-extrabold mb-1" style="color: var(--text-main)">Выставление критерия K_сроки</h1>
+                    <p class="text-sm" style="color: var(--text-secondary)">Укажите оценки своевременности (от 2 до 5) для руководителей ОПОП.</p>
                 </div>
                 
                 <!-- Поиск в таблице -->
@@ -69,16 +72,16 @@
                     <input type="text" 
                            v-model="searchQuery" 
                            placeholder="Поиск по коду, ОПОП или ФИО..." 
-                           class="w-full px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm">
+                           class="w-full px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-gray-400"></i>
                 </div>
             </div>
 
             <!-- Таблица направлений -->
-            <div class="overflow-x-auto rounded-2xl border border-gray-100 bg-white/50">
+            <div class="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/30">
                 <table class="w-full text-left text-sm border-collapse">
                     <thead>
-                        <tr class="bg-gray-50/50 border-b border-gray-100 text-indigo-950 font-bold">
+                        <tr class="bg-gray-50/50 dark:bg-black/10 border-b border-gray-100 dark:border-gray-800 font-bold" style="color: var(--text-main)">
                             <th class="p-4 w-28">Код ОПОП</th>
                             <th class="p-4">Название программы / Профиль</th>
                             <th class="p-4 w-48">Руководитель</th>
@@ -86,30 +89,28 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="spec in filteredSpecialties" :key="spec.id" class="border-b border-gray-100/50 hover:bg-white/40 transition-colors">
-                            <td class="p-4 font-bold text-indigo-900">{{ spec.code }}</td>
+                        <tr v-for="spec in filteredSpecialties" :key="spec.id" class="border-b border-gray-100/50 dark:border-gray-800/50 hover:bg-white/40 transition-colors">
+                            <td class="p-4 font-bold" style="color: var(--text-main)">{{ spec.code }}</td>
                             <td class="p-4">
-                                <div class="font-bold text-indigo-950">{{ spec.name }}</div>
-                                <div class="text-xs text-gray-400 mt-0.5" v-if="spec.profile !== '-'">Профиль: {{ spec.profile }}</div>
-                                <div class="text-xs text-gray-400">Институт: {{ spec.institute }}</div>
+                                <div class="font-bold" style="color: var(--text-main)">{{ spec.spec_name }}</div>
+                                <div class="text-xs mt-0.5" style="color: var(--text-secondary)" v-if="spec.profile !== '-'">Профиль: {{ spec.profile }}</div>
+                                <div class="text-xs" style="color: var(--text-secondary)">Институт: {{ spec.institute }}</div>
                             </td>
-                            <td class="p-4 font-semibold text-gray-700">{{ spec.supervisor_name }}</td>
+                            <td class="p-4 font-semibold text-gray-700 dark:text-gray-300">{{ spec.supervisor_name }}</td>
                             <td class="p-4">
                                 <div class="flex items-center justify-center space-x-1.5">
-                                    <!-- Кнопки оценок -->
                                     <button v-for="score in [2, 3, 4, 5]" 
                                             :key="score"
                                             @click="saveKSroki(spec.id, score)"
                                             :class="[
                                                 getKSrokiValue(spec.id) === score 
-                                                ? 'bg-purple-600 text-white shadow-sm' 
-                                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-purple-50'
+                                                ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' 
+                                                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100'
                                             ]"
                                             class="w-9 h-9 rounded-lg font-bold text-xs transition-all focus:outline-none flex items-center justify-center">
                                         {{ score }}
                                     </button>
                                     
-                                    <!-- Значок сохранения -->
                                     <div class="w-5 flex justify-center">
                                         <transition name="fade">
                                             <i v-if="savedStatus[spec.id]" class="fa-solid fa-circle-check text-green-500 text-sm"></i>
@@ -119,7 +120,7 @@
                             </td>
                         </tr>
                         <tr v-if="filteredSpecialties.length === 0">
-                            <td colspan="4" class="p-8 text-center text-gray-400">Направления не найдены</td>
+                            <td colspan="4" class="p-8 text-center text-gray-450">Направления не найдены</td>
                         </tr>
                     </tbody>
                 </table>
@@ -129,7 +130,6 @@
 
     </div>
 
-    <!-- Подключаем Vue 3 Prod и Логику -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="/assets/js/manager.js"></script>
 </body>

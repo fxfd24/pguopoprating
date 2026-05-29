@@ -1,30 +1,36 @@
 /* ---- СТРОГАЯ ПРЕМИАЛЬНАЯ МОНОХРОМНАЯ ПАЛИТРА ---- */
 :root {
-    --bg-color: #f1f3f6; /* Светлый алюминий */
-    --text-main: #000000; /* Контрастный черный */
-    --text-secondary: #334155; /* Угольный */
-    --text-muted: #64748b; /* Холодный серый */
-    --card-bg: rgba(255, 255, 255, 0.12); /* Кристально прозрачное стекло */
+    --bg-color: #f1f3f6;
+    --text-main: #000000;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --card-bg: rgba(255, 255, 255, 0.18);
     --card-border: rgba(255, 255, 255, 0.35);
     --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-    --card-glow: rgba(255, 255, 255, 0.5);
+    --card-glow: rgba(255, 255, 255, 0.6);
     --accent-bg: #000000;
     --accent-text: #ffffff;
     --border-hover: rgba(0, 0, 0, 0.15);
 }
 
 .dark {
-    --bg-color: #06080c; /* Глубокий космический черный */
-    --text-main: #ffffff; /* Контрастный чистый белый */
-    --text-secondary: #94a3b8; /* Серебристый */
-    --text-muted: #475569; /* Сланцевый */
-    --card-bg: rgba(15, 23, 42, 0.15); /* Темное прозрачное стекло */
-    --card-border: rgba(255, 255, 255, 0.08);
-    --card-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
+    --bg-color: #06080c;
+    --text-main: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #475569;
+    --card-bg: rgba(15, 23, 42, 0.2);
+    --card-border: rgba(255, 255, 255, 0.12);
+    --card-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7);
     --card-glow: rgba(255, 255, 255, 0.06);
     --accent-bg: #ffffff;
     --accent-text: #000000;
-    --border-hover: rgba(255, 255, 255, 0.2);
+    --border-hover: rgba(255, 255, 255, 0.25);
+}
+
+/* Глобальное отключение синей рамки выделения на мобильных */
+* {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
 }
 
 body {
@@ -37,7 +43,13 @@ body {
     position: relative;
 }
 
-/* ---- ТЕХНОЛОГИЯ LIQUID GLASS (ЭФФЕКТ ДЕФОРМАЦИИ СТЕКЛА) ---- */
+.dark body {
+    background-image: 
+        radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.04) 0, transparent 60%),
+        radial-gradient(at 100% 100%, rgba(0, 0, 0, 0.8) 0, transparent 60%);
+}
+
+/* ---- ТЕХНОЛОГИЯ LIQUID GLASS (БЕЗ OVERFLOW: HIDDEN) ---- */
 .glass-card {
     position: relative;
     background: var(--card-bg);
@@ -46,11 +58,11 @@ body {
     box-shadow: 
         inset 0 1.5px 1.5px 0 var(--card-glow),
         var(--card-shadow);
-    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    overflow: hidden;
+    transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    /* УБРАЛИ overflow: hidden, чтобы списки не обрезались */
 }
 
-/* Применение искажения на подложку */
+/* Размытие подложки через псевдоэлемент */
 .glass-card::after {
     content: '';
     position: absolute;
@@ -58,9 +70,9 @@ body {
     z-index: -1;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    border-radius: inherit; /* Наследует скругление углов родителя */
 }
 
-/* referencing SVG filter for crystal refraction in supported engines */
 @supports (backdrop-filter: url(#displacementFilter)) {
     .glass-card::after {
         backdrop-filter: url(#displacementFilter) blur(3px);
@@ -71,23 +83,24 @@ body {
 .glass-card-hover {
     cursor: pointer;
 }
+/* Только визуальное изменение цвета при наведении (без прыжков) */
 .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.22);
-    transform: translateY(-4px) scale(1.02);
+    background: rgba(255, 255, 255, 0.28);
     border-color: var(--border-hover);
-    box-shadow: 
-        inset 0 1.5px 1.5px 0 var(--card-glow),
-        0 25px 50px -10px rgba(0, 0, 0, 0.08);
 }
 
 .dark .glass-card-hover:hover {
-    background: rgba(15, 23, 42, 0.25);
-    box-shadow: 
-        inset 0 1.5px 1.5px 0 var(--card-glow),
-        0 25px 50px -10px rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.28);
+    border-color: var(--border-hover);
 }
 
-/* ---- ДЕКОРАТИВНЫЕ МЯГКИЕ СФЕРЫ ДЛЯ КОНТРАСТА СТЕКЛА ---- */
+/* ---- СКРЫТИЕ ПОЛЯ ВВОДА ДЛЯ ОБХОДА МЕНЕДЖЕРОВ ПАРОЛЕЙ ---- */
+.secure-input {
+    -webkit-text-security: disc !important; /* Скрывает символы точками */
+    text-security: disc !important;
+}
+
+/* ---- ДЕКОРАТИВНЫЕ МЯГКИЕ СФЕРЫ НА ФОНЕ ---- */
 .glass-blob {
     position: absolute;
     width: 550px;
@@ -106,7 +119,6 @@ body {
 .dark .blob-light-2 { background: #0f172a; opacity: 0.4; }
 .dark .blob-light-3 { background: #334155; opacity: 0.3; }
 
-/* ---- ФУНКЦИОНАЛЬНЫЕ СТИЛИ ---- */
 .floating-widget {
     transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
 }
@@ -118,7 +130,7 @@ body {
 }
 
 .modal-overlay {
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(15, 23, 42, 0.1);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }

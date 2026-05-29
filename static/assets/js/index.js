@@ -21,7 +21,6 @@ createApp({
         const setupParallax = () => {
             if (window.innerWidth < 768) return;
 
-            const header = document.getElementById('header-parallax');
             const textBlock = document.getElementById('text-parallax');
             const gridBlock = document.getElementById('grid-parallax');
 
@@ -35,7 +34,7 @@ createApp({
                 const deltaX = (mouseX - centerX) / centerX;
                 const deltaY = (mouseY - centerY) / centerY;
 
-                if (header) header.style.transform = `translate3d(${deltaX * 6}px, ${deltaY * 3}px, 0)`;
+                // Двигаются только центральный текст и сетка
                 if (textBlock) textBlock.style.transform = `translate3d(${deltaX * -8}px, ${deltaY * -5}px, 0)`;
                 if (gridBlock) gridBlock.style.transform = `translate3d(${deltaX * 12}px, ${deltaY * 6}px, 0)`;
             });
