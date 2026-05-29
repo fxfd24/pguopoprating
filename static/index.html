@@ -4,119 +4,145 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система оценки ОПОП | ПГУ</title>
-    <!-- Подключаем чистый Tailwind CSS v2 без JS-компилятора и предупреждений в консоли -->
+    <!-- Чистый Tailwind CSS v2 -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Общие стили проекта -->
     <link rel="stylesheet" href="/assets/css/style.css">
     <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="min-h-screen flex flex-col justify-between text-gray-800 font-sans">
+<body class="min-h-screen flex flex-col justify-between text-gray-800 dark:text-gray-100 font-sans">
 
-    <!-- Декоративные фоновые элементы для Glassmorphism -->
-    <div class="bg-blob blob-indigo"></div>
-    <div class="bg-blob blob-purple"></div>
+    <div id="app" class="min-h-screen flex flex-col justify-between">
+        
+        <!-- ================= АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (Язык и Тема) ================= -->
+        <!-- md:absolute - крепится в шапку на ПК, fixed - плавает в правом нижнем углу на телефонах -->
+        <div class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl">
+            <!-- Кнопка смены языка с флагом -->
+            <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
+                <span>{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
+            </button>
+            
+            <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
 
-    <!-- Хедер -->
-    <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div class="flex items-center space-x-3">
-            <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg">
-                <i class="fa-solid fa-graduation-cap text-xl"></i>
-            </div>
-            <div>
-                <span class="font-bold text-lg tracking-wide text-indigo-900 block">ОЦЕНКА ОПОП</span>
-                <span class="text-xs text-gray-500 uppercase font-semibold">Пятигорский государственный университет</span>
-            </div>
+            <!-- Кнопка смены темы -->
+            <button @click="toggleTheme" class="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-base focus:outline-none">
+                <i v-if="theme === 'light'" class="fa-solid fa-moon text-indigo-600"></i>
+                <i v-else class="fa-solid fa-sun text-yellow-400"></i>
+            </button>
         </div>
-    </header>
 
-    <!-- Основной блок выбора роли -->
-    <main class="flex-grow flex items-center justify-center px-4 py-8">
-        <div class="max-w-4xl w-full">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl font-extrabold text-indigo-900 tracking-tight sm:text-5xl mb-4">
-                    Оценка качества образовательных программ
-                </h1>
-                <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                    Пожалуйста, выберите вашу роль в системе для перехода к заполнению анкеты оценки руководителей ОПОП.
-                </p>
+        <!-- Хедер -->
+        <header id="header-parallax" class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between parallax-smooth">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-wide text-indigo-900 dark:text-indigo-400 block uppercase">
+                        {{ t.headerTitle }}
+                    </span>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">
+                        {{ t.headerSubtitle }}
+                    </span>
+                </div>
             </div>
+        </header>
 
-            <!-- Сетка ролей -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Основной блок выбора роли -->
+        <main class="flex-grow flex items-center justify-center px-4 py-8">
+            <div class="max-w-4xl w-full">
                 
-                <!-- Карта: Студент -->
-                <a href="/student.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group">
-                    <div>
-                        <div class="bg-blue-100 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
-                            <i class="fa-solid fa-user-graduate text-xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Обучающийся</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">
-                            Оценка руководителя образовательной программы студентами всех курсов.
-                        </p>
-                    </div>
-                    <span class="mt-6 text-sm font-semibold text-blue-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
-                        Начать опрос <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
-                    </span>
-                </a>
+                <!-- Центральный блок (Заголовки) -->
+                <div id="text-parallax" class="text-center mb-12 animate-entrance parallax-smooth">
+                    <h1 class="text-3xl font-extrabold text-indigo-900 dark:text-indigo-400 tracking-tight sm:text-5xl mb-4 leading-tight">
+                        {{ t.mainTitle }}
+                    </h1>
+                    <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+                        {{ t.mainSubtitle }}
+                    </p>
+                </div>
 
-                <!-- Карта: Декан -->
-                <a href="/expert.html?role=dean" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group">
-                    <div>
-                        <div class="bg-indigo-100 text-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
-                            <i class="fa-solid fa-user-tie text-xl"></i>
+                <!-- Сетка ролей (4 плитки) -->
+                <div id="grid-parallax" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-entrance parallax-smooth" style="animation-delay: 0.15s;">
+                    
+                    <!-- Карта: Студент -->
+                    <a href="/student.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                        <div>
+                            <div class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+                                <i class="fa-solid fa-user-graduate text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.studentTitle }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                {{ t.studentDesc }}
+                            </p>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Декан</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">
-                            Оценка деятельности руководителей в ролях Наставника и Администратора.
-                        </p>
-                    </div>
-                    <span class="mt-6 text-sm font-semibold text-indigo-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
-                        Перейти к оценке <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
-                    </span>
-                </a>
+                        <span class="mt-6 text-sm font-semibold text-blue-600 dark:text-blue-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                            {{ t.startBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </span>
+                    </a>
 
-                <!-- Карта: Зав. кафедрой -->
-                <a href="/expert.html?role=hod" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group">
-                    <div>
-                        <div class="bg-violet-100 text-violet-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
-                            <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                    <!-- Карта: Декан -->
+                    <a href="/expert.html?role=dean" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                        <div>
+                            <div class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
+                                <i class="fa-solid fa-user-tie text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.deanTitle }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                {{ t.deanDesc }}
+                            </p>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Зав. кафедрой</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">
-                            Оценка качества учебно-методической работы и поддержки адаптации.
-                        </p>
-                    </div>
-                    <span class="mt-6 text-sm font-semibold text-violet-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
-                        Перейти к оценке <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
-                    </span>
-                </a>
+                        <span class="mt-6 text-sm font-semibold text-indigo-600 dark:text-indigo-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                            {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </span>
+                    </a>
 
-                <!-- Карта: Начальник управления -->
-                <a href="/manager.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group">
-                    <div>
-                        <div class="bg-purple-100 text-purple-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
-                            <i class="fa-solid fa-sliders text-xl"></i>
+                    <!-- Карта: Зав. кафедрой -->
+                    <a href="/expert.html?role=hod" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                        <div>
+                            <div class="bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
+                                <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.hodTitle }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                {{ t.hodDesc }}
+                            </p>
                         </div>
-                        <h3 class="text-xl font-bold text-indigo-900 mb-2">Нач. управления</h3>
-                        <p class="text-sm text-gray-500 leading-relaxed">
-                            Выставление критерия K_сроки по всем направлениям подготовки.
-                        </p>
-                    </div>
-                    <span class="mt-6 text-sm font-semibold text-purple-600 inline-flex items-center group-hover:translate-x-1 transition-transform">
-                        Заполнить K_сроки <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
-                    </span>
-                </a>
+                        <span class="mt-6 text-sm font-semibold text-violet-600 dark:text-violet-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                            {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </span>
+                    </a>
 
+                    <!-- Карта: Начальник управления -->
+                    <a href="/manager.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                        <div>
+                            <div class="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
+                                <i class="fa-solid fa-sliders text-xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.managerTitle }}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+                                {{ t.managerDesc }}
+                            </p>
+                        </div>
+                        <span class="mt-6 text-sm font-semibold text-purple-600 dark:text-purple-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                            {{ t.fillBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        </span>
+                    </a>
+
+                </div>
             </div>
-        </div>
-    </main>
+        </main>
 
-    <!-- Футер -->
-    <footer class="w-full text-center py-6 text-xs text-gray-400 border-t border-gray-200/50 mt-12">
-        &copy; 2026 Пятигорский государственный университет. Все права защищены.
-    </footer>
+        <!-- Футер -->
+        <footer class="w-full text-center py-6 text-xs text-gray-400 border-t border-gray-200/20 mt-12">
+            &copy; 2026 Пятигорский государственный университет. Все права защищены.
+        </footer>
 
+    </div>
+
+    <!-- Подключаем Vue 3 Prod и Логику -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/assets/js/index.js"></script>
 </body>
 </html>

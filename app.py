@@ -27,7 +27,7 @@ class AuthRequest(BaseModel):
 # Статические пароли для доступа к закрытым разделам
 PASSWORDS = {
     "expert": "opop2026!",   # Пароль для Деканов и Зав. Кафедрами
-    "manager": "opop2026!", # Пароль для Начальника управления
+    "manager": "manager_opop2026!", # Пароль для Начальника управления
     "admin": "admin_opop2026!"      # Пароль для входа в Админ-панель (Аналитика)
 }
 
@@ -331,7 +331,7 @@ def verify_password(data: AuthRequest):
         return {"status": "success", "authenticated": True}
     else:
         return {"status": "error", "authenticated": False, "message": "Неверный пароль доступа"}
-        
+
 # Получить списки экспертов
 @app.get("/api/experts")
 def get_experts(db: sqlite3.Connection = Depends(get_db)):
