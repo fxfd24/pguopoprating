@@ -11,29 +11,34 @@
 </head>
 <body class="min-h-screen py-8 px-4">
 
-    <!-- ================= SVG ФИЛЬТР LIQUID GLASS (С ХАБРА) ================= -->
+    <!-- СФЕРЫ НА ФОНЕ ДЛЯ ИДЕАЛЬНОЙ СТЕКЛЯННОСТИ -->
+    <div class="glass-blob blob-light-1"></div>
+    <div class="glass-blob blob-light-2"></div>
+    <div class="glass-blob blob-light-3"></div>
+
+    <!-- ================= ИСПРАВЛЕННЫЙ SVG ФИЛЬТР LIQUID GLASS С ХАБРА ================= -->
     <svg style="display: none">
-        <filter id="displacementFilter">
+        <filter id="displacementFilter" x="0%" y="0%" width="100%" height="100%">
             <feImage
-                href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAMoElEQVRogZ1a3ZqjyI6MkBJc3XOz7/+g+53pMoq9kJQk2K6Zs0yNGzAG/YRCSgn+/r0PYpCD2IEH+SC/yIdZfj6MD9pu3M02cjMb5KC50cycNBoJ0kiCMDn8BEWCACgCAkAAIAhQAGAAIRccNGIDBjCADdilHdilh/QAH9AX+DA+yN1sM9vAYRw2SIKg1dNJkm61Y0YzGkmDGc1A0og8JEGT1Q1gBCkQJEgArENgCi4QFDR1AABIAEEJggAIECRJogBJeblIkLK0AUEOjpQUBMzMyPk/naTRUvTUgTQDjWZESmxgfgJGIA8poE62+HNHvSeJedzngdYgZZaASNepr1HelgQhYthuhjKrpaBmrP+MZuUHt9IqP9m宏观"
+                href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAMoElEQVRogZ1a3ZqjyI6MkBJc3XOz7/+g+53pMoq9kJQk2K6Zs0yNGzAG/YRCSgn+/r0PYpCD2IEH+SC/yIdZfj6MD9pu3M02cjMb5KC50cycNBoJ0kiCJKn8BEWCACgCAkAAIAhQAGAAIRccNGIDBjCADdilHdilh/QAH9AX+DA+yN1sM9vAYRw2SIKg1dNJkm61Y0YzGkmDGc1A0og8JEGT1Q1gBCkQJEgArENgCi4QFDR1AABIAEEJggAIECRJogBJeblIkLK0AUEOjpQUBMzMyPk/naTRUvTUgTQDjWZESmxgfgJGIA8poE62+HNHvSeJedzngdYgZZaASNepr1HelgQhYthuhjKrpaBmrP+MZuUHt9IqP9mKWnkEZiAxzc8UkgQFkDzFLAeohZJw7qh3InRAIYYUQAhBCOVStauHbaTBQXMaPWV2L4Sb08ytxPUS1wxmaftohIEX0QkT076Fe1UcZExISB3Uhp3Ctw9CSt0i2jMSKCKmP4nBB70AYsbEudtwcx++DR/DbJi7mafh6WVs2sSPQJql+Zmxm9Y/kVPSsw1OlB/K3gIhEwI4ICqDO47QM8Lj2BShCFHMCEnTaPhXYd5TBXN3H2N/7PtjezzG/nDfzDe6kw66+cRQBsQKfaSLK2RXBU6Y84SSFtwrhCOjNcULAaEIHId/f38f37tCoQAEBCBQ0uCXO+E0N7rb5j58e+y/f339/v3462t7bDaGuTMZkwZ6RgBIEvk50d/Si1DGMi8KqHVicc8ZstEIknBAh3Aojjjw/Obzb/v7z/78ez9CVAhKiAHDv8qYLPSPfX/8+vX719f//Nr/2rd9s+FWdOPNWCk9KzpZzM7Cjdr2J0+CnPSji+yEAATAPqeCO0IRccTzie9tH//7/A+ex98hISoeAhr2SCah08wSPV/7778eX3899t/DNrdJnMVXGapW4hbceSLnZP4VP9P20jw76afUUAMqACkkQYPb+OP8j8WXjnhGxHFECBQEcPCr2JFGp49tG4992x/742GeadcIFNXgBE3zQJ1sE99wX0Q/sbXkrsvRCa+ZCxonh/jc9Y3vZ4yDT4UiEJLIkIZ9mYFmNtLGw20bY9vMh/mocAVViM/Yb7uDInlyJRfEL9C/RO881HJGEFtZQJnBLc8LDBwxxrF7wCNiZmmBw3abGcvo5u6bcTg9MzEh4sXkrUMVBLwY/oV83m7pNgEpO1sNZDSUtWAZL6ag3GKjghIVRabDdzeaZx6AmRs35yCsLTq5pUHPhW1O/LwXnauVr1t7RQuvcuYHAKpUSIYgMzkhyiAwQkWjtruDltUlRuZf+qx/WCiZ9cdCO9OQn23fmp940eUrCMwgpgArNVQRiqo5YJBn8UGJQEAsCPnmDnoXOk7H8CQm2Mru09LzD1cs/ajAaXV79cUstZupqoA6CcsIIZyiEIiqMxJCw410ZJ5y0tyJTrbT0h20L9J/9MNVE85/rrFbUs4I4HpeVXJKAVlWIQxrjpJEDPOytlkyvaOL0AUti7icKt00WSR+5SKhi5eVTtdMrdUH0kJveRElL29nJi4P2Kh1SqcqTvzwLmsF9Sn0xwC4UdDbzHaTm7WqqeDOmpuiQDIaRVVr5dIHQHmgFlqmWqmwFll5La/QZ+P61Q/9mUkNpzxX2c8lzZReaJOvsdCHygVAUAYJwUxzDGDQ5wLRDEZ5umHlnKvtL5iZCe6uxksk36XXTb1Xn+R9VKkzuSgoEmZSZOk0LFcyuSYrD3T4LtIvbHMR9L0H3oTvi+3Lf1otnd92NPfCIRc7hGSy6hXUugwYtQyWmVmulgm78D1XWW5S/iD9HezvtlfpZ3CXDmWlJCMjZAELSvAswIeZTfxkAjtDtrI9X2RdDf9WsZv9Lwb+IDcnVXE_V08Y"
+                result="noise"
                 preserveAspectRatio="none"/>
             <feDisplacementMap
                 in="SourceGraphic"
-                in2="turbulence"
-                scale="600"
+                in2="noise"
+                scale="30"
                 xChannelSelector="R"
                 yChannelSelector="G"
             />
         </filter>
     </svg>
 
-    <!-- Скрываем разметку до инициализации Vue -->
     <div id="app" v-cloak class="max-w-3xl mx-auto">
         
-        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (скрывается при скролле) -->
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
         <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget">
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
-                <span>{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
+                <span style="color: var(--text-main)">{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
             </button>
             <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
             <button @click="toggleTheme" class="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-base focus:outline-none">
@@ -43,7 +48,7 @@
         </div>
         
         <!-- Кнопка Назад -->
-        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-indigo-600 transition-colors mb-6 font-semibold">
+        <a href="/" class="inline-flex items-center space-x-2 text-sm transition-colors mb-6 font-semibold" style="color: var(--text-secondary)">
             <i class="fa-solid fa-arrow-left"></i>
             <span>{{ t.goHome }}</span>
         </a>
@@ -53,50 +58,50 @@
             <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i class="fa-solid fa-check text-2xl"></i>
             </div>
-            <h2 class="text-2xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.submittedTitle }}</h2>
-            <p class="text-gray-600 dark:text-gray-400 mb-6">{{ t.submittedDesc }}</p>
-            <a href="/" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all inline-block">{{ t.goHomeBtn }}</a>
+            <h2 class="text-2xl font-bold mb-2" style="color: var(--text-main)">{{ t.submittedTitle }}</h2>
+            <p class="mb-6" style="color: var(--text-secondary)">{{ t.submittedDesc }}</p>
+            <a href="/" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all inline-block">{{ t.goHomeBtn }}</a>
         </div>
 
         <!-- Форма анкетирования -->
         <div v-else class="glass-card rounded-3xl shadow-xl p-6 sm:p-8 border border-white/40">
             <div class="border-b border-gray-200/50 pb-6 mb-6">
-                <h1 class="text-2xl font-extrabold text-indigo-900 dark:text-gray-100 mb-2">{{ t.studentTitle }}</h1>
-                <p class="text-sm text-gray-500 dark:text-gray-400">{{ t.studentDesc }}</p>
+                <h1 class="text-2xl font-extrabold mb-2" style="color: var(--text-main)">{{ t.studentTitle }}</h1>
+                <p class="text-sm" style="color: var(--text-secondary)">{{ t.studentDesc }}</p>
             </div>
 
             <!-- Шаг 1: Выбор направления -->
             <div class="mb-8">
-                <label class="block text-sm font-bold text-indigo-900 dark:text-gray-100 mb-2">Направление подготовки</label>
+                <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">{{ t.selectSpecialtyLabel }}</label>
                 <div class="relative">
                     <input type="text" 
                            v-model="searchQuery" 
                            @focus="showDropdown = true"
-                           placeholder="Начните вводить код или название..." 
-                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                           :placeholder="t.selectPlaceholder" 
+                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
                     
                     <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
                         <div v-for="spec in filteredSpecialties" 
                              :key="spec.id" 
                              @click="selectSpecialty(spec)"
-                             class="px-4 py-3 hover:bg-indigo-50 dark:hover:bg-indigo-950 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
-                            <div class="font-bold text-indigo-950 dark:text-gray-100">{{ spec.code }} {{ spec.name }}</div>
-                            <div class="text-xs text-gray-500 mt-0.5">
-                                Руководитель: <span class="font-semibold text-indigo-600">{{ spec.supervisor_name }}</span>
-                            </div>
+                             class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
+                            <div class="font-bold text-gray-950 dark:text-gray-100">{{ spec.code }} {{ spec.name }}</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Карточка выбранной специальности -->
-                <div v-if="selectedSpec" class="mt-4 p-4 bg-indigo-50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl flex items-center justify-between">
+                <div v-if="selectedSpec" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
-                        <div class="font-bold text-indigo-900 dark:text-gray-100 text-sm">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">Институт: {{ selectedSpec.institute }}</div>
+                        <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t.selectedCardTitle }}</div>
+                        <div class="font-bold text-sm mt-0.5" style="color: var(--text-main)">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
+                        <div class="text-xs mt-1" style="color: var(--text-secondary)" v-if="selectedSpec.profile !== '-'">{{ selectedSpec.profile }}</div>
+                        <div class="text-xs" style="color: var(--text-secondary)">{{ t.instituteLabel }}: {{ selectedSpec.institute }}</div>
                     </div>
-                    <div class="text-right">
-                        <div class="font-bold text-indigo-600 dark:text-indigo-400">{{ selectedSpec.supervisor_name }}</div>
+                    <div class="sm:text-right">
+                        <div class="text-xs text-gray-400 uppercase">{{ t.supervisorLabel }}</div>
+                        <div class="font-bold" style="color: var(--text-main)">{{ selectedSpec.supervisor_name }}</div>
                     </div>
                 </div>
             </div>
@@ -105,8 +110,8 @@
             <div v-if="selectedSpec" class="space-y-8">
                 
                 <div v-for="(q, idx) in questions" :key="idx" class="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-white dark:border-gray-800">
-                    <p class="font-bold text-indigo-900 dark:text-gray-100 text-sm sm:text-base mb-4">
-                        <span class="text-indigo-600 mr-1">Вопрос {{ idx + 1 }}.</span> {{ q }}
+                    <p class="font-bold text-sm sm:text-base mb-4" style="color: var(--text-main)">
+                        <span class="text-gray-400 mr-1">{{ idx + 1 }}.</span> {{ q }}
                     </p>
                     
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -115,8 +120,8 @@
                                 @click="answers['q' + (idx+1)] = score"
                                 :class="[
                                     answers['q' + (idx+1)] === score 
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' 
-                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-indigo-50 dark:hover:bg-indigo-950/40'
+                                    ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-md' 
+                                    : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900'
                                 ]"
                                 class="border px-3 py-2.5 rounded-xl text-center transition-all duration-200 text-xs font-semibold focus:outline-none">
                             <div class="text-lg font-bold mb-0.5">{{ score }}</div>
@@ -129,7 +134,7 @@
                 <div class="pt-4">
                     <button @click="submitVote"
                             :disabled="!isFormValid || loading"
-                            class="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white py-3.5 px-6 rounded-2xl font-bold shadow-lg transition-all flex items-center justify-center space-x-2">
+                            class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 disabled:cursor-not-allowed text-white dark:text-black py-3.5 px-6 rounded-2xl font-bold shadow-lg transition-all flex items-center justify-center space-x-2">
                         <span v-if="loading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
                         <span v-else><i class="fa-solid fa-paper-plane mr-2"></i>{{ t.saveBtn }}</span>
                     </button>

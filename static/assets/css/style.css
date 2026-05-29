@@ -1,63 +1,70 @@
-/* ---- СТРОГАЯ МОНОХРОМНАЯ ПАЛИТРА ---- */
+/* ---- СТРОГАЯ ПРЕМИАЛЬНАЯ МОНОХРОМНАЯ ПАЛИТРА ---- */
 :root {
-    --bg-color: #ebedf2; /* Чистый светло-серый */
+    --bg-color: #f1f3f6; /* Светлый алюминий */
     --text-main: #000000; /* Контрастный черный */
-    --text-secondary: #334155; /* Темно-серый */
-    --text-muted: #64748b; /* Серый */
-    --card-bg: rgba(255, 255, 255, 0.18); /* Прозрачное жидкое стекло */
+    --text-secondary: #334155; /* Угольный */
+    --text-muted: #64748b; /* Холодный серый */
+    --card-bg: rgba(255, 255, 255, 0.12); /* Кристально прозрачное стекло */
     --card-border: rgba(255, 255, 255, 0.35);
-    --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
-    --card-glow: rgba(255, 255, 255, 0.6);
-    --accent: #000000;
+    --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+    --card-glow: rgba(255, 255, 255, 0.5);
+    --accent-bg: #000000;
+    --accent-text: #ffffff;
+    --border-hover: rgba(0, 0, 0, 0.15);
 }
 
 .dark {
-    --bg-color: #07090e; /* Глубокий монохромный темный */
+    --bg-color: #06080c; /* Глубокий космический черный */
     --text-main: #ffffff; /* Контрастный чистый белый */
-    --text-secondary: #cbd5e1; /* Светло-серый */
-    --text-muted: #475569; /* Темно-серый */
-    --card-bg: rgba(15, 23, 42, 0.2); /* Темное прозрачное жидкое стекло */
-    --card-border: rgba(255, 255, 255, 0.12);
-    --card-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.7);
-    --card-glow: rgba(255, 255, 255, 0.1);
-    --accent: #ffffff;
+    --text-secondary: #94a3b8; /* Серебристый */
+    --text-muted: #475569; /* Сланцевый */
+    --card-bg: rgba(15, 23, 42, 0.15); /* Темное прозрачное стекло */
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
+    --card-glow: rgba(255, 255, 255, 0.06);
+    --accent-bg: #ffffff;
+    --accent-text: #000000;
+    --border-hover: rgba(255, 255, 255, 0.2);
 }
 
-/* Благородный монохромный градиент на фоне */
 body {
     background-color: var(--bg-color);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.45) 0, transparent 60%),
-        radial-gradient(at 100% 100%, rgba(255, 255, 255, 0.25) 0, transparent 60%);
+    color: var(--text-main);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     min-height: 100vh;
     transition: background-color 0.5s ease, color 0.3s ease;
     overflow-x: hidden;
+    position: relative;
 }
 
-.dark body {
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(255, 255, 255, 0.04) 0, transparent 60%),
-        radial-gradient(at 100% 100%, rgba(0, 0, 0, 0.8) 0, transparent 60%);
-}
-
-/* ---- ТЕХНОЛОГИЯ LIQUID GLASS (С преломлением SVG) ---- */
+/* ---- ТЕХНОЛОГИЯ LIQUID GLASS (ЭФФЕКТ ДЕФОРМАЦИИ СТЕКЛА) ---- */
 .glass-card {
+    position: relative;
     background: var(--card-bg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     border-radius: 24px;
     border: 1px solid var(--card-border);
     box-shadow: 
         inset 0 1.5px 1.5px 0 var(--card-glow),
         var(--card-shadow);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease-out;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    overflow: hidden;
 }
 
-/* Fallback для Safari и браузеров с поддержкой SVG Displacement */
-@supports not (hanging-punctuation:first) {
-    .glass-card {
-        backdrop-filter: url(#displacementFilter) blur(4px);
+/* Применение искажения на подложку */
+.glass-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* referencing SVG filter for crystal refraction in supported engines */
+@supports (backdrop-filter: url(#displacementFilter)) {
+    .glass-card::after {
+        backdrop-filter: url(#displacementFilter) blur(3px);
+        -webkit-backdrop-filter: url(#displacementFilter) blur(3px);
     }
 }
 
@@ -65,25 +72,44 @@ body {
     cursor: pointer;
 }
 .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.22);
     transform: translateY(-4px) scale(1.02);
+    border-color: var(--border-hover);
     box-shadow: 
         inset 0 1.5px 1.5px 0 var(--card-glow),
-        0 25px 45px -10px rgba(0, 0, 0, 0.08);
+        0 25px 50px -10px rgba(0, 0, 0, 0.08);
 }
 
 .dark .glass-card-hover:hover {
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(15, 23, 42, 0.25);
     box-shadow: 
         inset 0 1.5px 1.5px 0 var(--card-glow),
-        0 25px 45px -10px rgba(0, 0, 0, 0.5);
+        0 25px 50px -10px rgba(0, 0, 0, 0.6);
 }
 
-/* ---- СКРЫТИЕ ПАНЕЛИ ЯЗЫКА ПРИ ПРОКРУТКЕ ---- */
+/* ---- ДЕКОРАТИВНЫЕ МЯГКИЕ СФЕРЫ ДЛЯ КОНТРАСТА СТЕКЛА ---- */
+.glass-blob {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: -10;
+}
+.blob-light-1 { background: #94a3b8; top: -10%; left: -10%; }
+.blob-light-2 { background: #cbd5e1; bottom: -10%; right: -10%; }
+.blob-light-3 { background: #475569; top: 40%; left: 40%; }
+
+.dark .blob-light-1 { background: #1e293b; opacity: 0.4; }
+.dark .blob-light-2 { background: #0f172a; opacity: 0.4; }
+.dark .blob-light-3 { background: #334155; opacity: 0.3; }
+
+/* ---- ФУНКЦИОНАЛЬНЫЕ СТИЛИ ---- */
 .floating-widget {
     transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
 }
-
 .floating-widget-hidden {
     opacity: 0;
     visibility: hidden;
@@ -92,11 +118,10 @@ body {
 }
 
 .modal-overlay {
-    background: rgba(15, 23, 42, 0.1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
-
 .dark .modal-overlay {
     background: rgba(0, 0, 0, 0.5);
 }
@@ -105,7 +130,6 @@ body {
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
 .animate-entrance {
     animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

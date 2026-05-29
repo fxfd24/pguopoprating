@@ -1,4 +1,3 @@
-// 1. Мгновенная проверка темы для исключения белой вспышки при загрузке страницы
 (function () {
     const savedTheme = localStorage.getItem('theme') || 'light';
     if (savedTheme === 'dark') {
@@ -8,7 +7,6 @@
     }
 })();
 
-// 2. Глобальный переводчик для всех страниц
 window.globalTranslations = {
     ru: {
         headerTitle: "Оценка ОПОП",
@@ -27,17 +25,20 @@ window.globalTranslations = {
         evaluateBtn: "Перейти к оценке",
         fillBtn: "Заполнить K_сроки",
         
-        // Общие тексты
+        // Внутренние страницы
         goHome: "На главную",
         goHomeBtn: "Вернуться на главную",
         submittedTitle: "Спасибо за участие!",
         submittedDesc: "Ваша оценка успешно принята. Вы помогаете сделать образовательный процесс лучше.",
         loading: "Сохранение...",
         saveBtn: "Отправить оценку",
-        accessDenied: "Доступ ограничен",
-        enterPassword: "Пожалуйста, введите пароль доступа...",
-        passwordPlaceholder: "Введите пароль...",
-        loginBtn: "Войти в панель"
+        
+        // Поля выбора студента
+        selectSpecialtyLabel: "Направление подготовки (поиск по коду или названию)",
+        selectPlaceholder: "Начните вводить код или название направления...",
+        selectedCardTitle: "Выбранное направление",
+        instituteLabel: "Институт",
+        supervisorLabel: "Руководитель ОПОП"
     },
     en: {
         headerTitle: "OPOP Assessment",
@@ -56,21 +57,23 @@ window.globalTranslations = {
         evaluateBtn: "Go to Assessment",
         fillBtn: "Fill K_sroki",
 
-        // Общие тексты
+        // Внутренние страницы
         goHome: "Back",
         goHomeBtn: "Go to Main Page",
         submittedTitle: "Thank you for participating!",
         submittedDesc: "Your rating has been successfully saved. You are helping to improve the education quality.",
         loading: "Saving...",
         saveBtn: "Submit Evaluation",
-        accessDenied: "Access Restricted",
-        enterPassword: "Please enter the access password...",
-        passwordPlaceholder: "Enter password...",
-        loginBtn: "Log In"
+
+        // Поля выбора студента
+        selectSpecialtyLabel: "Academic Program (search by code or name)",
+        selectPlaceholder: "Start typing program code or name...",
+        selectedCardTitle: "Selected Program",
+        instituteLabel: "Institute/School",
+        supervisorLabel: "Program Supervisor"
     }
 };
 
-// 3. Общие хелперы для экспорта во Vue
 window.initThemeAndLang = () => {
     const currentLang = ref(localStorage.getItem('lang') || 'ru');
     const theme = ref(localStorage.getItem('theme') || 'light');
@@ -78,7 +81,6 @@ window.initThemeAndLang = () => {
     const toggleLang = () => {
         currentLang.value = currentLang.value === 'ru' ? 'en' : 'ru';
         localStorage.setItem('lang', currentLang.value);
-        // Перезагружаем страницу, чтобы все Vue-компоненты на любой странице обновили язык
         window.location.reload();
     };
 
@@ -97,11 +99,5 @@ window.initThemeAndLang = () => {
         applyThemeClasses();
     };
 
-    return {
-        currentLang,
-        theme,
-        toggleLang,
-        toggleTheme,
-        applyThemeClasses
-    };
+    return { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses };
 };
