@@ -96,8 +96,7 @@ body {
 
 /* ---- СКРЫТИЕ ПОЛЯ ВВОДА ДЛЯ ОБХОДА МЕНЕДЖЕРОВ ПАРОЛЕЙ ---- */
 .secure-input {
-    -webkit-text-security: disc !important; /* Скрывает символы точками */
-    text-security: disc !important;
+    -webkit-text-security: disc !important; /* Валидный префикс для WebKit/Blink (Chrome, Safari, Edge) */
 }
 
 /* ---- ДЕКОРАТИВНЫЕ МЯГКИЕ СФЕРЫ НА ФОНЕ ---- */
