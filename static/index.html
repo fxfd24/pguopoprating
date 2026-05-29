@@ -4,28 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Система оценки ОПОП | ПГУ</title>
-    <!-- Чистый Tailwind CSS v2 -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Общие стили проекта -->
     <link rel="stylesheet" href="/assets/css/style.css">
-    <!-- FontAwesome иконки -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Подключаем shared.js ПЕРВЫМ, чтобы мгновенно применить темную тему -->
+    <script src="/assets/js/shared.js"></script>
 </head>
-<body class="min-h-screen flex flex-col justify-between text-gray-800 dark:text-gray-100 font-sans">
+<body class="min-h-screen flex flex-col justify-between">
 
-    <div id="app" class="min-h-screen flex flex-col justify-between">
+    <!-- Добавили v-cloak для скрытия фигурных скобок до загрузки Vue -->
+    <div id="app" v-cloak class="min-h-screen flex flex-col justify-between">
         
-        <!-- ================= АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (Язык и Тема) ================= -->
-        <!-- md:absolute - крепится в шапку на ПК, fixed - плавает в правом нижнем углу на телефонах -->
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
         <div class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl">
-            <!-- Кнопка смены языка с флагом -->
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
                 <span>{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
             </button>
-            
             <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
-
-            <!-- Кнопка смены темы -->
             <button @click="toggleTheme" class="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-base focus:outline-none">
                 <i v-if="theme === 'light'" class="fa-solid fa-moon text-indigo-600"></i>
                 <i v-else class="fa-solid fa-sun text-yellow-400"></i>
@@ -39,7 +35,7 @@
                     <i class="fa-solid fa-graduation-cap text-xl"></i>
                 </div>
                 <div>
-                    <span class="font-bold text-lg tracking-wide text-indigo-900 dark:text-indigo-400 block uppercase">
+                    <span class="font-bold text-lg tracking-wide text-indigo-900 dark:text-gray-100 block uppercase">
                         {{ t.headerTitle }}
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">
@@ -53,9 +49,8 @@
         <main class="flex-grow flex items-center justify-center px-4 py-8">
             <div class="max-w-4xl w-full">
                 
-                <!-- Центральный блок (Заголовки) -->
                 <div id="text-parallax" class="text-center mb-12 animate-entrance parallax-smooth">
-                    <h1 class="text-3xl font-extrabold text-indigo-900 dark:text-indigo-400 tracking-tight sm:text-5xl mb-4 leading-tight">
+                    <h1 class="text-3xl font-extrabold text-indigo-900 dark:text-gray-100 tracking-tight sm:text-5xl mb-4 leading-tight">
                         {{ t.mainTitle }}
                     </h1>
                     <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -63,7 +58,7 @@
                     </p>
                 </div>
 
-                <!-- Сетка ролей (4 плитки) -->
+                <!-- Сетка ролей -->
                 <div id="grid-parallax" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-entrance parallax-smooth" style="animation-delay: 0.15s;">
                     
                     <!-- Карта: Студент -->
@@ -72,7 +67,7 @@
                             <div class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
                                 <i class="fa-solid fa-user-graduate text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.studentTitle }}</h3>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.studentTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.studentDesc }}
                             </p>
@@ -88,7 +83,7 @@
                             <div class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
                                 <i class="fa-solid fa-user-tie text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.deanTitle }}</h3>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.deanTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.deanDesc }}
                             </p>
@@ -104,7 +99,7 @@
                             <div class="bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
                                 <i class="fa-solid fa-chalkboard-user text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.hodTitle }}</h3>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.hodTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.hodDesc }}
                             </p>
@@ -120,7 +115,7 @@
                             <div class="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
                                 <i class="fa-solid fa-sliders text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-indigo-400 mb-2">{{ t.managerTitle }}</h3>
+                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.managerTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.managerDesc }}
                             </p>
@@ -141,7 +136,6 @@
 
     </div>
 
-    <!-- Подключаем Vue 3 Prod и Логику -->
     <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="/assets/js/index.js"></script>
 </body>
