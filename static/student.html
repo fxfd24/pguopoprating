@@ -11,17 +11,33 @@
 </head>
 <body class="min-h-screen py-8 px-4">
 
+    <!-- ================= SVG ФИЛЬТР LIQUID GLASS (С ХАБРА) ================= -->
+    <svg style="display: none">
+        <filter id="displacementFilter">
+            <feImage
+                href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAMoElEQVRogZ1a3ZqjyI6MkBJc3XOz7/+g+53pMoq9kJQk2K6Zs0yNGzAG/YRCSgn+/r0PYpCD2IEH+SC/yIdZfj6MD9pu3M02cjMb5KC50cycNBoJ0kiCMDn8BEWCACgCAkAAIAhQAGAAIRccNGIDBjCADdilHdilh/QAH9AX+DA+yN1sM9vAYRw2SIKg1dNJkm61Y0YzGkmDGc1A0og8JEGT1Q1gBCkQJEgArENgCi4QFDR1AABIAEEJggAIECRJogBJeblIkLK0AUEOjpQUBMzMyPk/naTRUvTUgTQDjWZESmxgfgJGIA8poE62+HNHvSeJedzngdYgZZaASNepr1HelgQhYthuhjKrpaBmrP+MZuUHt9IqP9m宏观"
+                preserveAspectRatio="none"/>
+            <feDisplacementMap
+                in="SourceGraphic"
+                in2="turbulence"
+                scale="600"
+                xChannelSelector="R"
+                yChannelSelector="G"
+            />
+        </filter>
+    </svg>
+
     <!-- Скрываем разметку до инициализации Vue -->
     <div id="app" v-cloak class="max-w-3xl mx-auto">
         
-        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
-        <div class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl">
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (скрывается при скролле) -->
+        <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget">
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
                 <span>{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
             </button>
             <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
             <button @click="toggleTheme" class="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-base focus:outline-none">
-                <i v-if="theme === 'light'" class="fa-solid fa-moon text-indigo-600"></i>
+                <i v-if="theme === 'light'" class="fa-solid fa-moon text-gray-800"></i>
                 <i v-else class="fa-solid fa-sun text-yellow-400"></i>
             </button>
         </div>

@@ -7,23 +7,36 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Подключаем shared.js ПЕРВЫМ, чтобы мгновенно применить темную тему -->
     <script src="/assets/js/shared.js"></script>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
-    <!-- Добавили v-cloak для скрытия фигурных скобок до загрузки Vue -->
+    <!-- ================= SVG ФИЛЬТР LIQUID GLASS (С ХАБРА) ================= -->
+    <svg style="display: none">
+        <filter id="displacementFilter">
+            <feImage
+                href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAIAAAAlC+aJAAAACXBIWXMAAA9hAAAPYQGoP6dpAAAMoElEQVRogZ1a3ZqjyI6MkBJc3XOz7/+g+53pMoq9kJQk2K6Zs0yNGzAG/YRCSgn+/r0PYpCD2IEH+SC/yIdZfj6MD9pu3M02cjMb5KC50cycNBoJ0kiCMDn8BEWCACgCAkAAIAhQAGAAIRccNGIDBjCADdilHdilh/QAH9AX+DA+yN1sM9vAYRw2SIKg1dNJkm61Y0YzGkmDGc1A0og8JEGT1Q1gBCkQJEgArENgCi4QFDR1AABIAEEJggAIECRJogBJeblIkLK0AUEOjpQUBMzMyPk/naTRUvTUgTQDjWZESmxgfgJGIA8poE62+HNHvSeJedzngdYgZZaASNepr1HelgQhYthuhjKrpaBmrP+MZuUHt9IqP9mKWnkEZiAxzc8UkgQFkDzFLAeohZZw7qh3InRAIYYUQAhBCOVStauHbaTBQXMaPWV2L4Sb08ytxTransitions="
+                preserveAspectRatio="none"/>
+            <feDisplacementMap
+                in="SourceGraphic"
+                in2="turbulence"
+                scale="600"
+                xChannelSelector="R"
+                yChannelSelector="G"
+            />
+        </filter>
+    </svg>
+
     <div id="app" v-cloak class="min-h-screen flex flex-col justify-between">
         
-        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
-        <div class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl">
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (скрывается при скролле) -->
+        <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget">
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
                 <span>{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
             </button>
             <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
             <button @click="toggleTheme" class="w-9 h-9 flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-base focus:outline-none">
-                <i v-if="theme === 'light'" class="fa-solid fa-moon text-indigo-600"></i>
+                <i v-if="theme === 'light'" class="fa-solid fa-moon text-gray-800"></i>
                 <i v-else class="fa-solid fa-sun text-yellow-400"></i>
             </button>
         </div>
@@ -31,11 +44,11 @@
         <!-- Хедер -->
         <header id="header-parallax" class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between parallax-smooth">
             <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg">
+                <div class="bg-black dark:bg-white text-white dark:text-black p-2.5 rounded-xl shadow-lg">
                     <i class="fa-solid fa-graduation-cap text-xl"></i>
                 </div>
                 <div>
-                    <span class="font-bold text-lg tracking-wide text-indigo-900 dark:text-gray-100 block uppercase">
+                    <span class="font-bold text-lg tracking-wide text-gray-950 dark:text-gray-100 block uppercase">
                         {{ t.headerTitle }}
                     </span>
                     <span class="text-xs text-gray-500 dark:text-gray-400 uppercase font-semibold">
@@ -50,7 +63,7 @@
             <div class="max-w-4xl w-full">
                 
                 <div id="text-parallax" class="text-center mb-12 animate-entrance parallax-smooth">
-                    <h1 class="text-3xl font-extrabold text-indigo-900 dark:text-gray-100 tracking-tight sm:text-5xl mb-4 leading-tight">
+                    <h1 class="text-3xl font-extrabold text-gray-950 dark:text-gray-100 tracking-tight sm:text-5xl mb-4 leading-tight">
                         {{ t.mainTitle }}
                     </h1>
                     <p class="text-base sm:text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
@@ -64,15 +77,15 @@
                     <!-- Карта: Студент -->
                     <a href="/student.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
                         <div>
-                            <div class="bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
                                 <i class="fa-solid fa-user-graduate text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.studentTitle }}</h3>
+                            <h3 class="text-xl font-bold text-gray-950 dark:text-gray-100 mb-2">{{ t.studentTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.studentDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold text-blue-600 dark:text-blue-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        <span class="mt-6 text-sm font-semibold text-black dark:text-white inline-flex items-center group-hover:translate-x-1 transition-transform">
                             {{ t.startBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                         </span>
                     </a>
@@ -80,15 +93,15 @@
                     <!-- Карта: Декан -->
                     <a href="/expert.html?role=dean" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
                         <div>
-                            <div class="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-indigo-600 group-hover:text-white">
+                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
                                 <i class="fa-solid fa-user-tie text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.deanTitle }}</h3>
+                            <h3 class="text-xl font-bold text-gray-950 dark:text-gray-100 mb-2">{{ t.deanTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.deanDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold text-indigo-600 dark:text-indigo-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        <span class="mt-6 text-sm font-semibold text-black dark:text-white inline-flex items-center group-hover:translate-x-1 transition-transform">
                             {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                         </span>
                     </a>
@@ -96,15 +109,15 @@
                     <!-- Карта: Зав. кафедрой -->
                     <a href="/expert.html?role=hod" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
                         <div>
-                            <div class="bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-violet-600 group-hover:text-white">
+                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
                                 <i class="fa-solid fa-chalkboard-user text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.hodTitle }}</h3>
+                            <h3 class="text-xl font-bold text-gray-950 dark:text-gray-100 mb-2">{{ t.hodTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.hodDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold text-violet-600 dark:text-violet-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        <span class="mt-6 text-sm font-semibold text-black dark:text-white inline-flex items-center group-hover:translate-x-1 transition-transform">
                             {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                         </span>
                     </a>
@@ -112,15 +125,15 @@
                     <!-- Карта: Начальник управления -->
                     <a href="/manager.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
                         <div>
-                            <div class="bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
+                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
                                 <i class="fa-solid fa-sliders text-xl"></i>
                             </div>
-                            <h3 class="text-xl font-bold text-indigo-900 dark:text-gray-100 mb-2">{{ t.managerTitle }}</h3>
+                            <h3 class="text-xl font-bold text-gray-950 dark:text-gray-100 mb-2">{{ t.managerTitle }}</h3>
                             <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
                                 {{ t.managerDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold text-purple-600 dark:text-purple-400 inline-flex items-center group-hover:translate-x-1 transition-transform">
+                        <span class="mt-6 text-sm font-semibold text-black dark:text-white inline-flex items-center group-hover:translate-x-1 transition-transform">
                             {{ t.fillBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                         </span>
                     </a>
