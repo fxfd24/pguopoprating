@@ -38,7 +38,13 @@ window.globalTranslations = {
         selectPlaceholder: "Начните вводить код или название направления...",
         selectedCardTitle: "Выбранное направление",
         instituteLabel: "Институт",
-        supervisorLabel: "Руководитель ОПОП"
+        supervisorLabel: "Руководитель ОПОП",
+
+        // Секретный шлюз (Исправлено: добавлены утерянные переводы!)
+        accessDenied: "Доступ ограничен",
+        enterPassword: "Пожалуйста, введите пароль доступа для продолжения.",
+        passwordPlaceholder: "Введите пароль...",
+        loginBtn: "Войти в панель"
     },
     en: {
         headerTitle: "OPOP Assessment",
@@ -70,7 +76,13 @@ window.globalTranslations = {
         selectPlaceholder: "Start typing program code or name...",
         selectedCardTitle: "Selected Program",
         instituteLabel: "Institute/School",
-        supervisorLabel: "Program Supervisor"
+        supervisorLabel: "Program Supervisor",
+
+        // Секретный шлюз
+        accessDenied: "Access Restricted",
+        enterPassword: "Please enter the access password to continue.",
+        passwordPlaceholder: "Enter password...",
+        loginBtn: "Log In"
     }
 };
 

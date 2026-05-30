@@ -10,6 +10,9 @@
     --card-glow: rgba(255, 255, 255, 0.7);
     --input-bg: #ffffff;
     --info-bg: rgba(0, 0, 0, 0.03);
+    
+    /* Сообщаем браузеру, что документ светлый */
+    color-scheme: light;
 }
 
 .dark {
@@ -23,9 +26,16 @@
     --card-glow: rgba(255, 255, 255, 0.08);
     --input-bg: #111827;
     --info-bg: rgba(255, 255, 255, 0.04);
+    
+    /* Сообщаем браузеру, что документ переключился в темную тему */
+    color-scheme: dark;
 }
 
-/* Глобальный сброс синей мобильной рамки */
+html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+}
+
 * {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
@@ -40,20 +50,14 @@ body {
     transition: background-color 0.4s ease, color 0.3s ease;
 }
 
-/* Выпадающие списки ВСЕГДА белые с черным текстом по вашей просьбе */
-select, option {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+/* Нативные селекты и опции (идеально рендерятся браузером благодаря color-scheme) */
+select {
+    background-color: var(--input-bg) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--card-border) !important;
 }
 
-.dark select, .dark option {
-    background-color: #ffffff !important; /* Белый фон */
-    color: #000000 !important;             /* Контрастный черный текст */
-    border: 1px solid rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Инпуты ввода (текст контрастен теме) */
+/* Инпуты ввода */
 input, textarea {
     background-color: var(--input-bg) !important;
     color: var(--text-main) !important;
@@ -66,7 +70,7 @@ input, textarea {
     color: var(--text-main) !important;
 }
 
-/* Строгие семантические классы контрастности */
+/* Семантические классы контрастности */
 .text-main { color: var(--text-main) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-muted { color: var(--text-muted) !important; }
@@ -149,7 +153,6 @@ input, textarea {
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* Обход сохранения паролей */
 .secure-input {
     -webkit-text-security: disc !important;
 }
