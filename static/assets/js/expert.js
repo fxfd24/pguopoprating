@@ -2,6 +2,10 @@ const { createApp, ref, computed, onMounted, watch } = Vue;
 
 createApp({
     setup() {
+        // Инициализируем язык и тему
+        const { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses } = window.initThemeAndLang();
+        const t = computed(() => window.globalTranslations[currentLang.value]);
+
         const authenticated = ref(false);
         const passwordInput = ref('');
         const authLoading = ref(false);
@@ -11,7 +15,7 @@ createApp({
         const deansList = ref([]);
         const hodsList = ref([]);
 
-        const roleType = ref('dean'); // 'dean' или 'hod'
+        const roleType = ref('dean'); 
         const selectedEvaluator = ref('');
         const searchQuery = ref('');
         const showDropdown = ref(false);
@@ -19,11 +23,9 @@ createApp({
         const loading = ref(false);
         const submitted = ref(false);
 
-        // Массивы оценок под каждый вопрос
-        const nastAnswers = ref([null, null, null, null]); // 4 вопроса
-        const adminAnswers = ref([null, null, null]);      // 3 вопроса
+        const nastAnswers = ref([null, null, null, null]); 
+        const adminAnswers = ref([null, null, null]);      
 
-        // Тексты вопросов по ролям из ТЗ
         const questionsDB = {
             dean: {
                 nast: [
@@ -53,7 +55,6 @@ createApp({
             }
         };
 
-        // Загрузка списков при старте
         const loadInitialData = async () => {
             try {
                 const specRes = await fetch('/api/specialties');
@@ -68,12 +69,10 @@ createApp({
             }
         };
 
-        // Сброс выбора эксперта при смене роли
         watch(roleType, () => {
             selectedEvaluator.value = '';
         });
 
-        // Проверка пароля на бэкенде
         const verifyPassword = async () => {
             if (!passwordInput.value) return;
             authLoading.value = true;
@@ -113,7 +112,6 @@ createApp({
             return questionsDB[roleType.value];
         });
 
-        // Поиск направления
         const filteredSpecialties = computed(() => {
             if (!searchQuery.value) return [];
             const q = searchQuery.value.toLowerCase();
@@ -129,14 +127,12 @@ createApp({
             showDropdown.value = false;
         };
 
-        // Проверка валидности заполнения
         const isFormValid = computed(() => {
             const nastFilled = nastAnswers.value.every(v => v !== null);
             const adminFilled = adminAnswers.value.every(v => v !== null);
             return selectedSpec.value && selectedEvaluator.value && nastFilled && adminFilled;
         });
 
-        // Отправка данных
         const submitEvaluation = async () => {
             if (!isFormValid.value) return;
             loading.value = true;
@@ -148,12 +144,10 @@ createApp({
                         specialty_id: selectedSpec.value.id,
                         evaluator_name: selectedEvaluator.value,
                         role_type: roleType.value,
-                        // Передаем оценки Наставника
                         nast_q1: nastAnswers.value[0],
                         nast_q2: nastAnswers.value[1],
                         nast_q3: nastAnswers.value[2],
                         nast_q4: nastAnswers.value[3],
-                        // Передаем оценки Администратора
                         admin_q1: adminAnswers.value[0],
                         admin_q2: adminAnswers.value[1],
                         admin_q3: adminAnswers.value[2]
@@ -182,6 +176,11 @@ createApp({
         };
 
         return {
+            currentLang,
+            theme,
+            toggleLang,
+            toggleTheme,
+            t,
             authenticated,
             passwordInput,
             authLoading,

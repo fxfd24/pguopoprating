@@ -35,8 +35,8 @@
 
     <div id="app" v-cloak class="max-w-3xl mx-auto">
         
-        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
-        <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget">
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (Позиционирование в верхнем ПРАВОМ углу на ПК) -->
+        <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:left-auto md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget w-max">
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
                 <span style="color: var(--text-main)">{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
             </button>
