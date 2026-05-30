@@ -11,6 +11,10 @@
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/assets/js/shared.js"></script>
+    <script>
+        // Принудительная блокировка темной темы - админка всегда светлая
+        document.documentElement.classList.remove('dark');
+    </script>
 </head>
 <body class="py-8 px-4">
 
@@ -20,13 +24,7 @@
 
     <div id="app" v-cloak class="max-w-6xl mx-auto min-h-screen flex flex-col justify-between">
         
-        <!-- Кнопка Назад (отображается только после авторизации) -->
-        <a v-if="authenticated" href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6 font-semibold">
-            <i class="fa-solid fa-arrow-left"></i>
-            <span>{{ t.goHome }}</span>
-        </a>
-
-        <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ (ИСПРАВЛЕНО: убрали кнопку возврата) ================= -->
+        <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
                 <div class="w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
@@ -42,9 +40,9 @@
                                @keyup.enter="verifyPassword"
                                :placeholder="t.passwordPlaceholder" 
                                :class="{'secure-input': !showPassword}"
-                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
+                               class="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
                         
-                        <button @click.stop.prevent="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                        <button @click.stop.prevent="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black focus:outline-none">
                             <i v-if="showPassword" class="fa-solid fa-eye-slash"></i>
                             <i v-else class="fa-solid fa-eye"></i>
                         </button>
@@ -52,7 +50,7 @@
                     
                     <button @click="verifyPassword"
                             :disabled="authLoading"
-                            class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 text-white dark:text-black py-3 rounded-xl font-bold shadow-md transition-all">
+                            class="w-full bg-black text-white hover:bg-gray-900 py-3 rounded-xl font-bold shadow-md transition-all">
                         <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
                         <span v-else>{{ t.loginBtn }}</span>
                     </button>
@@ -64,7 +62,7 @@
         <!-- ================= СВОДНЫЕ СТАТИСТИКИ И АНАЛИТИКА ================= -->
         <div v-else class="space-y-8 animate-entrance">
             
-            <!-- Карточки счетчиков с исправленными логическими подписями -->
+            <!-- Карточки счетчиков -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 <!-- Карточка: Студенты -->
@@ -81,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- Карточка: Деканы (исправлена подпись) -->
+                <!-- Карточка: Деканы -->
                 <div class="glass-card p-6 flex items-center justify-between">
                     <div>
                         <span class="text-xs font-bold text-gray-400 uppercase">Оценок от Деканов</span>
@@ -95,7 +93,7 @@
                     </div>
                 </div>
 
-                <!-- Карточка: Заведующие (исправлена подпись) -->
+                <!-- Карточка: Заведующие -->
                 <div class="glass-card p-6 flex items-center justify-between">
                     <div>
                         <span class="text-xs font-bold text-gray-400 uppercase">Оценок от Зав. кафедрами</span>
@@ -114,11 +112,11 @@
             <!-- Дополнительная аналитика: Лидеры и Активность институтов -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
-                <!-- Плитка: Лидеры ОПОП по коэффициенту R_A (с кнопкой Показать всех) -->
+                <!-- Плитка: Лидеры ОПОП по коэффициенту R_A -->
                 <div class="glass-card p-6 shadow-xl flex flex-col justify-between">
                     <div>
                         <h3 class="text-base font-bold text-main mb-4"><i class="fa-solid fa-trophy mr-2 text-yellow-500"></i>Лидеры-руководители (по R_A)</h3>
-                        <div class="space-y-3">
+                        <div :class="{'max-h-64 overflow-y-auto pr-1.5': showAllLeaders}" class="space-y-3">
                             <div v-for="(leader, idx) in visibleLeaders" :key="leader.id" class="flex items-center justify-between p-3 info-block rounded-xl animate-entrance">
                                 <div class="flex items-center space-x-3">
                                     <span class="font-black text-lg text-secondary">{{ idx + 1 }}</span>
@@ -128,24 +126,24 @@
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <span class="font-black text-sm text-indigo-600 dark:text-indigo-400">{{ leader.r_a }}</span>
+                                    <span class="font-black text-sm text-indigo-600">{{ leader.r_a }}</span>
                                     <div class="text-xxs text-muted">рейтинг</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="pt-4 border-t border-gray-100/20 mt-4 text-center">
-                        <button @click="showAllLeaders = !showAllLeaders" class="text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                        <button @click="showAllLeaders = !showAllLeaders" class="text-xs font-bold text-gray-400 hover:text-black focus:outline-none">
                             {{ showAllLeaders ? 'Скрыть список' : 'Показать весь список руководителей' }}
                         </button>
                     </div>
                 </div>
 
-                <!-- Плитка: Активность институтов за сегодня (с кнопкой Показать всех) -->
+                <!-- Плитка: Активность институтов за сегодня -->
                 <div class="glass-card p-6 shadow-xl flex flex-col justify-between">
                     <div>
                         <h3 class="text-base font-bold text-main mb-4"><i class="fa-solid fa-fire mr-2 text-red-500"></i>Активность институтов за сегодня</h3>
-                        <div class="space-y-3" v-if="instToday.length > 0">
+                        <div :class="{'max-h-64 overflow-y-auto pr-1.5': showAllInstitutes}" class="space-y-3" v-if="instToday.length > 0">
                             <div v-for="(inst, idx) in visibleInstitutes" :key="inst.institute" class="flex items-center justify-between p-3 info-block rounded-xl animate-entrance">
                                 <div class="flex items-center space-x-3">
                                     <span class="font-black text-lg text-secondary">{{ idx + 1 }}</span>
@@ -157,13 +155,9 @@
                                 </div>
                             </div>
                         </div>
-                        <div v-else class="flex flex-col items-center justify-center h-36 text-gray-400">
-                            <i class="fa-solid fa-calendar-day text-2xl mb-2"></i>
-                            <span class="text-xs">За сегодня голосов пока нет</span>
-                        </div>
                     </div>
                     <div class="pt-4 border-t border-gray-100/20 mt-4 text-center" v-if="instToday.length > 3">
-                        <button @click="showAllInstitutes = !showAllInstitutes" class="text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                        <button @click="showAllInstitutes = !showAllInstitutes" class="text-xs font-bold text-gray-400 hover:text-black focus:outline-none">
                             {{ showAllInstitutes ? 'Скрыть список' : 'Показать весь список институтов' }}
                         </button>
                     </div>
@@ -191,11 +185,11 @@
                             <input type="text" 
                                    v-model="searchQuery" 
                                    placeholder="Код, ОПОП или Руководитель..." 
-                                   class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                                   class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                             <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-gray-400"></i>
                         </div>
 
-                        <button @click="downloadCSV" class="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-900 dark:hover:bg-gray-100 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5">
+                        <button @click="downloadCSV" class="bg-black text-white hover:bg-gray-900 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5">
                             <i class="fa-solid fa-file-excel text-base"></i>
                             <span>Экспорт в CSV</span>
                         </button>
@@ -203,10 +197,10 @@
                 </div>
 
                 <!-- Таблица данных -->
-                <div class="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/30">
+                <div class="overflow-x-auto rounded-2xl border border-gray-100 bg-white/30">
                     <table class="w-full text-left text-xs border-collapse">
                         <thead>
-                            <tr class="bg-gray-50/50 dark:bg-black/10 border-b border-gray-100 dark:border-gray-800 font-bold text-main">
+                            <tr class="bg-gray-50/50 border-b border-gray-100 font-bold text-main">
                                 <th class="p-4 w-24">Код</th>
                                 <th class="p-4 min-w-56">Программа подготовки / Институт</th>
                                 <th class="p-4">Руководитель</th>
@@ -219,7 +213,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="r in filteredRatings" :key="r.id" class="border-b border-gray-100/50 dark:border-gray-800/50 hover:bg-white/40 transition-colors">
+                            <tr v-for="r in filteredRatings" :key="r.id" class="border-b border-gray-100/50 hover:bg-white/40 transition-colors">
                                 <td class="p-4 font-bold text-main">{{ r.code }}</td>
                                 <td class="p-4">
                                     <div class="font-bold text-main text-xs">{{ r.spec_name }}</div>
@@ -229,9 +223,9 @@
                                 <td class="p-4 text-center text-secondary">{{ r.voters_count }}</td>
                                 <td class="p-4 text-center font-semibold text-main">{{ r.k_sroki || '-' }}</td>
                                 <td class="p-4 text-center text-main font-semibold">{{ r.student_avg }}</td>
-                                <td class="p-4 text-center font-black bg-indigo-50/10 text-indigo-600 dark:text-indigo-400 text-sm">{{ r.r_a }}</td>
-                                <td class="p-4 text-center font-black bg-violet-50/10 text-violet-600 dark:text-violet-400 text-sm">{{ r.r_b }}</td>
-                                <td class="p-4 text-center font-black bg-purple-50/10 text-purple-600 dark:text-purple-400 text-sm">{{ r.r_v }}</td>
+                                <td class="p-4 text-center font-black bg-indigo-50/10 text-indigo-600 text-sm">{{ r.r_a }}</td>
+                                <td class="p-4 text-center font-black bg-violet-50/10 text-violet-600 text-sm">{{ r.r_b }}</td>
+                                <td class="p-4 text-center font-black bg-purple-50/10 text-purple-600 text-sm">{{ r.r_v }}</td>
                             </tr>
                             <tr v-if="filteredRatings.length === 0">
                                 <td colspan="9" class="p-8 text-center text-gray-400">Данные не найдены</td>
@@ -240,6 +234,40 @@
                     </table>
                 </div>
 
+            </div>
+
+            <!-- ================= БЛОК СБРОСА БД ДЛЯ РЕЛИЗА (ИСПРАВЛЕНО!) ================= -->
+            <div class="pt-8 border-t border-gray-200/20">
+                <div class="glass-card p-6 border border-red-500/20 bg-red-50/5">
+                    <h3 class="text-base font-bold text-red-600 mb-2">
+                        <i class="fa-solid fa-triangle-exclamation mr-2"></i>Сброс базы данных (Очистка перед релизом)
+                    </h3>
+                    <p class="text-xs text-secondary mb-4">
+                        Данное действие безвозвратно удалит все накопленные оценки студентов, деканов, заведующих кафедрами и K_сроки. Справочники специальностей, руководителей, деканов и зав. кафедрами останутся нетронутыми.
+                    </p>
+                    
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 max-w-lg">
+                        <div class="relative flex-grow">
+                            <input type="text" 
+                                   v-model="resetConfirmPassword"
+                                   placeholder="Введите пароль confirm..." 
+                                   :class="{'secure-input': !showResetPassword}"
+                                   class="w-full pl-4 pr-12 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-sm">
+                            
+                            <button @click.stop.prevent="showResetPassword = !showResetPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black focus:outline-none">
+                                <i v-if="showResetPassword" class="fa-solid fa-eye-slash"></i>
+                                <i v-else class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+
+                        <button @click="resetDatabase"
+                                :disabled="!resetConfirmPassword || resetLoading"
+                                class="bg-red-600 hover:bg-red-700 disabled:bg-gray-300 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                            <span v-if="resetLoading"><i class="fa-solid fa-spinner animate-spin"></i> Очистка...</span>
+                            <span v-else><i class="fa-solid fa-trash-can mr-1.5"></i>Сбросить оценки</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </div>

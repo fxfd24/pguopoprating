@@ -2,7 +2,7 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        const { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses } = window.initThemeAndLang();
+        const { currentLang, theme, applyThemeClasses } = window.initThemeAndLang();
         const t = computed(() => window.globalTranslations[currentLang.value]);
 
         const authenticated = ref(false);
@@ -17,20 +17,20 @@ createApp({
         const searchQuery = ref('');
         const selectedInstitute = ref('');
 
-        // Стейты для раскрытия списков
         const showAllLeaders = ref(false);
         const showAllInstitutes = ref(false);
 
-        // Построение красивых накладывающихся графиков (Вчера vs Сегодня)
+        // Стейты сброса БД перед релизом
+        const resetConfirmPassword = ref('');
+        const showResetPassword = ref(false);
+        const resetLoading = ref(false);
+
         const renderMiniChart = (canvasId, yesterdayCurve, todayCurve) => {
             const ctx = document.getElementById(canvasId);
             if (!ctx) return;
             
-            const isDark = document.documentElement.classList.contains('dark');
-            
-            // Цвета линий: Сегодня - яркая сплошная, Вчера - тусклая полупрозрачная
-            const todayColor = isDark ? '#ffffff' : '#000000';
-            const yesterdayColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
+            const todayColor = '#000000';
+            const yesterdayColor = 'rgba(0, 0, 0, 0.15)';
 
             new Chart(ctx, {
                 type: 'line',
@@ -79,7 +79,6 @@ createApp({
                 instToday.value = data.inst_today;
                 ratings.value = data.ratings;
 
-                // Строим микро-графики
                 setTimeout(() => {
                     renderMiniChart('chart-students', data.stats.students_yesterday_curve, data.stats.students_today_curve);
                     renderMiniChart('chart-deans', data.stats.deans_yesterday_curve, data.stats.deans_today_curve);
@@ -121,36 +120,54 @@ createApp({
             }
         };
 
-        const checkSavedSession = async () => {
-            const savedPassword = window.authSession.get('admin');
-            if (savedPassword) {
-                try {
-                    const response = await fetch('/api/auth/verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ role: 'admin', password: savedPassword })
-                    });
-                    const res = await response.json();
-                    if (res.status === 'success') {
-                        sessionStorage.setItem('admin_password', savedPassword);
-                        authenticated.value = true;
-                        await loadAdminData();
-                    } else {
-                        window.authSession.clear('admin');
-                    }
-                } catch (e) {
-                    console.error("Ошибка фоновой проверки сессии:", e);
+        // Запуск безопасного сброса оценок
+        const resetDatabase = async () => {
+            const trimmedPass = resetConfirmPassword.value.trim();
+            if (!trimmedPass) return;
+            
+            const confirmed = confirm("Вы уверены, что хотите безвозвратно удалить ВСЕ оценки? Это действие нельзя отменить!");
+            if (!confirmed) return;
+
+            resetLoading.value = true;
+            const adminPassword = sessionStorage.getItem('admin_password');
+            try {
+                const response = await fetch('/api/admin/reset_db', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Password': adminPassword
+                    },
+                    body: JSON.stringify({
+                        confirm_password: trimmedPass
+                    })
+                });
+
+                if (response.status === 401) {
+                    alert("Сессия истекла. Перезагрузите страницу.");
+                    return;
                 }
+
+                const res = await response.json();
+                if (response.status === 200) {
+                    resetConfirmPassword.value = '';
+                    await loadAdminData();
+                    alert("База данных успешно очищена! Все оценки сброшены к нулю, система готова к релизу.");
+                } else {
+                    alert(res.detail || "Неверный пароль подтверждения сброса");
+                }
+            } catch (err) {
+                console.error("Ошибка при сбросе БД:", err);
+                alert("Ошибка связи с сервером.");
+            } finally {
+                resetLoading.value = false;
             }
         };
 
-        // Реактивный расчет списка лидеров (показывает 3 или всех)
         const visibleLeaders = computed(() => {
             const sorted = [...ratings.value].sort((a, b) => b.r_a - a.r_a);
             return showAllLeaders.value ? sorted : sorted.slice(0, 3);
         });
 
-        // Реактивный расчет списка институтов за сегодня (показывает 3 или всех)
         const visibleInstitutes = computed(() => {
             return showAllInstitutes.value ? instToday.value : instToday.value.slice(0, 3);
         });
@@ -205,8 +222,31 @@ createApp({
             }
         };
 
+        const checkSavedSession = async () => {
+            const savedPassword = window.authSession.get('admin');
+            if (savedPassword) {
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'admin', password: savedPassword })
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        sessionStorage.setItem('admin_password', savedPassword);
+                        authenticated.value = true;
+                        await loadAdminData();
+                    } else {
+                        window.authSession.clear('admin');
+                    }
+                } catch (e) {
+                    console.error("Ошибка фоновой проверки сессии:", e);
+                }
+            }
+        };
+
         onMounted(() => {
-            applyThemeClasses();
+            document.documentElement.classList.remove('dark');
             checkSavedSession();
         });
 
@@ -230,7 +270,11 @@ createApp({
             selectedInstitute,
             uniqueInstitutes,
             filteredRatings,
-            downloadCSV
+            downloadCSV,
+            resetConfirmPassword,
+            showResetPassword,
+            resetLoading,
+            resetDatabase
         };
     }
 }).mount('#app');

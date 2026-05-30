@@ -13,9 +13,9 @@ app = FastAPI(title="PGU OPOP Rating System")
 
 # ---- ВАШИ ПАРОЛИ (БЕЗОПАСНО ХРАНЯТСЯ НА СЕРВЕРЕ) ----
 PASSWORDS = {
-    "expert": "opop2026!",           # Пароль для Деканов и Зав. Кафедрами
-    "manager": "manager_opop2026!",   # Пароль для Начальника управления
-    "admin": "admin_opop2026!"       # Пароль для входа в Админ-панель
+    "expert": "Opop2026!",           # Пароль для Деканов и Зав. Кафедрами
+    "manager": "Manager_opop2026!",   # Пароль для Начальника управления
+    "admin": "Admin_opop2026!"       # Пароль для входа в Админ-панель
 }
 
 # ---- МОДЕЛИ ДАННЫХ ----
@@ -46,6 +46,9 @@ class AdminVote(BaseModel):
 class AuthRequest(BaseModel):
     role: str
     password: str
+
+class ResetDBRequest(BaseModel):
+    confirm_password: str
 
 # ---- ХЕЛПЕРЫ БЕЗОПАСНОСТИ СЕРВЕРА ----
 def verify_expert_auth(x_password: str = Header(None)):
@@ -475,6 +478,31 @@ def calculate_ratings_list(db: sqlite3.Connection):
         
     return results
 
+@app.post("/api/admin/reset_db")
+def reset_database(data: ResetDBRequest, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
+    # 1. Проверяем пароль администратора в заголовке
+    verify_admin_auth(x_password)
+    
+    # 2. Проверяем специальный пароль подтверждения сброса
+    if data.confirm_password != "aspirantura":
+        raise HTTPException(status_code=400, detail="Неверный пароль подтверждения сброса")
+    
+    cursor = db.cursor()
+    try:
+        # Очищаем только таблицы оценок
+        cursor.execute("DELETE FROM student_votes")
+        cursor.execute("DELETE FROM expert_votes")
+        cursor.execute("DELETE FROM admin_votes")
+        
+        # Сбрасываем счетчики автоинкремента в SQLite для чистой истории
+        cursor.execute("UPDATE sqlite_sequence SET seq = 0 WHERE name IN ('student_votes', 'expert_votes', 'admin_votes')")
+        
+        db.commit()
+        return {"status": "success", "message": "База данных успешно очищена. Все оценки сброшены."}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Ошибка при очистке БД: {str(e)}")
+
 @app.get("/api/admin/stats")
 def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
     ratings = calculate_ratings_list(db)
@@ -520,16 +548,29 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
     hods_yesterday_curve = get_cumulative_trend("expert_votes", "date('now', '-1 day', 'localtime')", "AND role_type='hod'")
     hods_today_curve = get_cumulative_trend("expert_votes", "date('now', 'localtime')", "AND role_type='hod'")
 
-    # 4. Лидеры-институты по количеству пришедших голосов за сегодня
+    # 4. Лидеры-институты по количеству пришедших голосов за сегодня (ВКЛЮЧАЯ ТЕ, У КОГО 0 ГОЛОСОВ)
+    # Извлекаем все уникальные институты из БД
+    all_insts_rows = db.execute("SELECT DISTINCT institute FROM specialties").fetchall()
+    all_institutes = [r["institute"] for r in all_insts_rows if r["institute"] and r["institute"] != '-']
+
+    # Получаем число голосов за сегодня для активных институтов
     inst_today_query = """
         SELECT s.institute, COUNT(*) as vote_count
         FROM student_votes sv
         JOIN specialties s ON sv.specialty_id = s.id
         WHERE date(sv.timestamp) = date('now', 'localtime')
         GROUP BY s.institute
-        ORDER BY vote_count DESC
     """
-    inst_today = [dict(r) for r in db.execute(inst_today_query).fetchall()]
+    today_votes_map = {r["institute"]: r["vote_count"] for r in db.execute(inst_today_query).fetchall()}
+
+    # Формируем полный список институтов с учетом нулей и сортируем по убыванию активности
+    inst_today = []
+    for inst in all_institutes:
+        inst_today.append({
+            "institute": inst,
+            "vote_count": today_votes_map.get(inst, 0)
+        })
+    inst_today.sort(key=lambda x: x["vote_count"], reverse=True)
 
     return {
         "stats": {
