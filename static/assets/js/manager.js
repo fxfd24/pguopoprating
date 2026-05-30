@@ -46,10 +46,11 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
+                    window.authSession.save('manager', trimmedPass);
                     sessionStorage.setItem('manager_password', trimmedPass);
                     authenticated.value = true;
                     await loadManagerData();
-                    setupScrollListener(); // Активируем ленивую загрузку после авторизации
+                    setupScrollListener();
                 } else {
                     authError.value = res.message || "Неверный пароль";
                 }
@@ -57,6 +58,30 @@ createApp({
                 authError.value = "Ошибка связи с сервером";
             } finally {
                 authLoading.value = false;
+            }
+        };
+
+        const checkSavedSession = async () => {
+            const savedPassword = window.authSession.get('manager');
+            if (savedPassword) {
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'manager', password: savedPassword })
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        sessionStorage.setItem('manager_password', savedPassword);
+                        authenticated.value = true;
+                        await loadManagerData();
+                        setupScrollListener();
+                    } else {
+                        window.authSession.clear('manager');
+                    }
+                } catch (e) {
+                    console.error("Ошибка фоновой проверки сессии:", e);
+                }
             }
         };
 
@@ -149,6 +174,7 @@ createApp({
 
         onMounted(() => {
             applyThemeClasses();
+            checkSavedSession();
         });
 
         return {

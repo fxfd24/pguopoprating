@@ -74,7 +74,7 @@ createApp({
         });
 
         const verifyPassword = async () => {
-            const trimmedPass = passwordInput.value.trim(); // Автоматически убираем лишние пробелы и переносы строк
+            const trimmedPass = passwordInput.value.trim();
             if (!trimmedPass) return;
             authLoading.value = true;
             authError.value = '';
@@ -89,6 +89,8 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
+                    // Сохраняем сессию на 24 часа в localStorage
+                    window.authSession.save('expert', trimmedPass);
                     sessionStorage.setItem('expert_password', trimmedPass);
                     authenticated.value = true;
                     await loadInitialData();
@@ -101,6 +103,32 @@ createApp({
                 authLoading.value = false;
             }
         };
+
+        // Фоновая проверка сессии при монтировании страницы
+        const checkSavedSession = async () => {
+            const savedPassword = window.authSession.get('expert');
+            if (savedPassword) {
+                // Если пароль сохранен, проверяем его валидность на бэкенде в фоне
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'expert', password: savedPassword })
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        sessionStorage.setItem('expert_password', savedPassword);
+                        authenticated.value = true;
+                        await loadInitialData();
+                    } else {
+                        window.authSession.clear('expert'); // Если пароль на сервере поменялся, сбрасываем
+                    }
+                } catch (e) {
+                    console.error("Ошибка фоновой проверки сессии:", e);
+                }
+            }
+        };
+
 
         const setRole = (role) => {
             roleType.value = role;
@@ -188,6 +216,7 @@ createApp({
 
         onMounted(() => {
             applyThemeClasses();
+            checkSavedSession();
         });
 
         return {

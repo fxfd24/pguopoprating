@@ -107,6 +107,7 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
+                    window.authSession.save('admin', trimmedPass);
                     sessionStorage.setItem('admin_password', trimmedPass);
                     authenticated.value = true;
                     await loadAdminData();
@@ -117,6 +118,29 @@ createApp({
                 authError.value = "Ошибка связи с сервером";
             } finally {
                 authLoading.value = false;
+            }
+        };
+
+        const checkSavedSession = async () => {
+            const savedPassword = window.authSession.get('admin');
+            if (savedPassword) {
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ role: 'admin', password: savedPassword })
+                    });
+                    const res = await response.json();
+                    if (res.status === 'success') {
+                        sessionStorage.setItem('admin_password', savedPassword);
+                        authenticated.value = true;
+                        await loadAdminData();
+                    } else {
+                        window.authSession.clear('admin');
+                    }
+                } catch (e) {
+                    console.error("Ошибка фоновой проверки сессии:", e);
+                }
             }
         };
 
@@ -183,6 +207,7 @@ createApp({
 
         onMounted(() => {
             applyThemeClasses();
+            checkSavedSession();
         });
 
         return {

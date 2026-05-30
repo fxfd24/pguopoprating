@@ -138,3 +138,36 @@ document.addEventListener('DOMContentLoaded', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 });
+
+// 4. Автономный менеджер сессий (срок жизни - 24 часа)
+window.authSession = {
+    // Сохранить пароль с ограничением по времени
+    save: (role, password) => {
+        const sessionData = {
+            password: password,
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000 // Текущее время + 24 часа в миллисекундах
+        };
+        localStorage.setItem('auth_session_' + role, JSON.stringify(sessionData));
+    },
+    // Получить сохраненный пароль, если он еще не истек
+    get: (role) => {
+        const raw = localStorage.getItem('auth_session_' + role);
+        if (!raw) return null;
+        try {
+            const data = JSON.parse(raw);
+            if (Date.now() < data.expiresAt) {
+                return data.password;
+            } else {
+                localStorage.removeItem('auth_session_' + role);
+                return null;
+            }
+        } catch (e) {
+            localStorage.removeItem('auth_session_' + role);
+            return null;
+        }
+    },
+    // Очистить сессию (разлогиниться)
+    clear: (role) => {
+        localStorage.removeItem('auth_session_' + role);
+    }
+};
