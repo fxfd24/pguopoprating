@@ -2,7 +2,7 @@ import os
 import sqlite3
 import csv
 from io import StringIO
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -11,7 +11,14 @@ from typing import List, Optional
 DB_FILE = "rating.db"
 app = FastAPI(title="PGU OPOP Rating System")
 
-# ---- МОДЕЛИ ДАННЫХ ДЛЯ ПРИЕМА ОТВЕТОВ ----
+# ---- ВАШИ ПАРОЛИ (БЕЗОПАСНО ХРАНЯТСЯ НА СЕРВЕРЕ) ----
+PASSWORDS = {
+    "expert": "opop2026!",           # Пароль для Деканов и Зав. Кафедрами
+    "manager": "manager_opop2026!",   # Пароль для Начальника управления
+    "admin": "admin_opop2026!"       # Пароль для входа в Админ-панель
+}
+
+# ---- МОДЕЛИ ДАННЫХ ----
 class StudentVote(BaseModel):
     specialty_id: int
     q1: int
@@ -20,27 +27,14 @@ class StudentVote(BaseModel):
     q4: int
     q5: int
 
-class AuthRequest(BaseModel):
-    role: str
-    password: str
-
-# Статические пароли для доступа к закрытым разделам
-PASSWORDS = {
-    "expert": "opop2026!",   # Пароль для Деканов и Зав. Кафедрами
-    "manager": "manager_opop2026!", # Пароль для Начальника управления
-    "admin": "admin_opop2026!"      # Пароль для входа в Админ-панель (Аналитика)
-}
-
 class ExpertVote(BaseModel):
     specialty_id: int
     evaluator_name: str
-    role_type: str # 'dean' или 'hod'
-    # Блок Наставник
+    role_type: str
     nast_q1: int
     nast_q2: int
     nast_q3: int
     nast_q4: int
-    # Блок Администратор
     admin_q1: int
     admin_q2: int
     admin_q3: int
@@ -48,6 +42,23 @@ class ExpertVote(BaseModel):
 class AdminVote(BaseModel):
     specialty_id: int
     k_sroki: int
+
+class AuthRequest(BaseModel):
+    role: str
+    password: str
+
+# ---- ХЕЛПЕРЫ БЕЗОПАСНОСТИ СЕРВЕРА ----
+def verify_expert_auth(x_password: str = Header(None)):
+    if x_password != PASSWORDS["expert"]:
+        raise HTTPException(status_code=401, detail="Неверный пароль доступа")
+
+def verify_manager_auth(x_password: str = Header(None)):
+    if x_password != PASSWORDS["manager"]:
+        raise HTTPException(status_code=401, detail="Неверный пароль доступа")
+
+def verify_admin_auth(x_password: str = Header(None)):
+    if x_password != PASSWORDS["admin"]:
+        raise HTTPException(status_code=401, detail="Неверный пароль доступа")
 
 # ---- ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ ----
 def get_db():
@@ -67,7 +78,6 @@ def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
-    # Создание таблиц
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS supervisors (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -110,7 +120,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         specialty_id INTEGER,
         evaluator_name TEXT,
-        role_type TEXT, -- 'dean' или 'hod'
+        role_type TEXT,
         nast_q1 INTEGER, nast_q2 INTEGER, nast_q3 INTEGER, nast_q4 INTEGER,
         admin_q1 INTEGER, admin_q2 INTEGER, admin_q3 INTEGER,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -133,7 +143,7 @@ def init_db():
     for h in hods_list:
         cursor.execute("INSERT OR IGNORE INTO hods (name) VALUES (?)", (h,))
 
-    # Наполнение Специальностей и Руководителей (из ТЗ)
+    # Наполнение Специальностей и Руководителей
     raw_specialties = [
         ("10.02.05", "Обеспечение информационной безопасности автоматизированных систем", "-", "Воробьев Г.А.", "ИРГЯИГТ"),
         ("38.02.02", "Страховое дело (по отраслям)", "-", "Минец К.Г.", "ВШУ"),
@@ -154,7 +164,7 @@ def init_db():
         ("10.04.01", "Информационная безопасность", "Управление информационной безопасностью и технологии защиты информации", "Воробьев Г.А.", "ИРГЯиГТ"),
         ("15.03.06", "Мехатроника и робототехника", "Интеллектуальная сервисная робототехника", "Тимченко О.В.", "ИРГЯиГТ"),
         ("21.02.19", "Землеустройство", "Земельно-имущественные отношения", "Арзуманова С.М.", "ЮИ"),
-        ("21.03.02", "Землеустройство и кадастры", "Кадастр недвижимости", "Неизвестный Р.О.", "ЮИ"), # В ТЗ пропущено ФИО, ставим заглушку
+        ("21.03.02", "Землеустройство и кадастры", "Кадастр недвижимости", "Неизвестный Р.О.", "ЮИ"),
         ("27.03.05", "Инноватика", "Управление инновационным бизнесом", "Головина Ю.Е.", "ИРГЯиГТ"),
         ("37.03.01", "Психология", "Прикладная психология", "Шаповалова М.Л.", "ВШУ"),
         ("37.05.02", "Психология служебной деятельности", "Психология безопасности", "Хребина С.В.", "ВШУ"),
@@ -248,7 +258,7 @@ def init_db():
         ("45.03.02", "Лингвистика", "Теория и методика преподавания иностранных языков и культур (французский и английский языки)", "Кобякова И.А.", "ИРГЯиГТ"),
         ("45.03.02", "Лингвистика", "Теория и практика межкультурной коммуникации (испанский и английский языки)", "Кобякова И.А.", "ИРГЯиГТ"),
         ("45.03.02", "Лингвистика", "Теория и практика межкультурной коммуникации (немецкий и английский языки)", "Кобякова И.А.", "ИРГЯиГТ"),
-        ("45.03.02", "Лингвистика", "Теория и практика межкультурной коммуникации (французский и английский языки)", "Кобякова И.А.", "ИРГЯиГТ"),
+        ("45.03.02", "Лингвистика", "Теория и практика межкультурной коммуникации (французский и английский языки)", "Кobякова И.А.", "ИРГЯиГТ"),
         ("45.03.02", "Лингвистика", "Теория, методика преподавания иностранных языков, межкультурная коммуникация – испанский и английский языки", "Кобякова И.А.", "ИРГЯиГТ"),
         ("45.03.02", "Лингвистика", "Теория, методика преподавания иностранных языков, межкультурная коммуникация – немецкий и английский языки", "Кобякова И.А.", "ИРГЯиГТ"),
         ("45.03.02", "Лингвистика", "Теория, методика преподавания иностранных языков, межкультурная коммуникация – французский и английский языки", "Кобякова И.А.", "ИРГЯиГТ"),
@@ -303,12 +313,8 @@ def init_db():
     conn.close()
     print("База данных создана и наполнена успешно!")
 
-# Инициализируем БД при старте приложения
 init_db()
 
-# ---- API МАРШРУТЫ ----
-
-# Получить список направлений
 @app.get("/api/specialties")
 def get_specialties(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
@@ -321,18 +327,6 @@ def get_specialties(db: sqlite3.Connection = Depends(get_db)):
     rows = cursor.fetchall()
     return [dict(row) for row in rows]
 
-@app.post("/api/auth/verify")
-def verify_password(data: AuthRequest):
-    correct_password = PASSWORDS.get(data.role)
-    if not correct_password:
-        raise HTTPException(status_code=400, detail="Неверная роль")
-    
-    if data.password == correct_password:
-        return {"status": "success", "authenticated": True}
-    else:
-        return {"status": "error", "authenticated": False, "message": "Неверный пароль доступа"}
-
-# Получить списки экспертов
 @app.get("/api/experts")
 def get_experts(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
@@ -344,7 +338,6 @@ def get_experts(db: sqlite3.Connection = Depends(get_db)):
 
     return {"deans": deans, "hods": hods}
 
-# Голосование студента
 @app.post("/api/vote/student")
 def vote_student(data: StudentVote, db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
@@ -353,13 +346,14 @@ def vote_student(data: StudentVote, db: sqlite3.Connection = Depends(get_db)):
         VALUES (?, ?, ?, ?, ?, ?)
     """, (data.specialty_id, data.q1, data.q2, data.q3, data.q4, data.q5))
     db.commit()
-    return {"status": "success", "message": "Оценка студента сохранена"}
+    return {"status": "success"}
 
-# Оценка эксперта (Декан / ЗавКафедрой)
 @app.post("/api/vote/expert")
-def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db)):
+def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
+    # Защита от прямого POST-запроса в обход модального окна
+    verify_expert_auth(x_password)
+    
     cursor = db.cursor()
-    # Удаляем старый голос этого же эксперта по этому направлению, чтобы была актуальная оценка
     cursor.execute("""
         DELETE FROM expert_votes 
         WHERE specialty_id = ? AND evaluator_name = ? AND role_type = ?
@@ -377,24 +371,35 @@ def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db)):
         data.admin_q1, data.admin_q2, data.admin_q3
     ))
     db.commit()
-    return {"status": "success", "message": "Оценка эксперта сохранена"}
+    return {"status": "success"}
 
-# Оценка K_сроки от Начальника управления
 @app.post("/api/vote/admin")
-def vote_admin(data: AdminVote, db: sqlite3.Connection = Depends(get_db)):
+def vote_admin(data: AdminVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
+    verify_manager_auth(x_password)
+    
     cursor = db.cursor()
     cursor.execute("""
         INSERT OR REPLACE INTO admin_votes (specialty_id, k_sroki)
         VALUES (?, ?)
     """, (data.specialty_id, data.k_sroki))
     db.commit()
-    return {"status": "success", "message": "Оценка K_сроки сохранена"}
+    return {"status": "success"}
 
-# ---- РАСЧЕТ РЕЙТИНГОВ И СТАТИСТИКА ДЛЯ АДМИНКИ ----
+# ---- ПРОВЕРКА ПАРОЛЕЙ И АВТОРИЗАЦИЯ ----
+@app.post("/api/auth/verify")
+def verify_password(data: AuthRequest):
+    correct_password = PASSWORDS.get(data.role)
+    if not correct_password:
+        raise HTTPException(status_code=400, detail="Неверная роль")
+    
+    if data.password == correct_password:
+        return {"status": "success", "authenticated": True}
+    else:
+        return {"status": "error", "authenticated": False, "message": "Неверный пароль доступа"}
+
 def calculate_ratings_list(db: sqlite3.Connection):
     cursor = db.cursor()
     
-    # 1. Загружаем все направления и руководителей
     cursor.execute("""
         SELECT s.id, s.code, s.name as spec_name, s.profile, s.institute, sup.name as supervisor_name
         FROM specialties s
@@ -402,7 +407,6 @@ def calculate_ratings_list(db: sqlite3.Connection):
     """)
     specs = cursor.fetchall()
 
-    # 2. Загружаем все средние оценки студентов
     cursor.execute("""
         SELECT specialty_id, 
                AVG(CAST(q1+q2+q3+q4+q5 AS REAL) / 5.0) as avg_stud,
@@ -412,11 +416,9 @@ def calculate_ratings_list(db: sqlite3.Connection):
     """)
     student_avgs = {r["specialty_id"]: (r["avg_stud"], r["stud_count"]) for r in cursor.fetchall()}
 
-    # 3. Загружаем K_сроки
     cursor.execute("SELECT specialty_id, k_sroki FROM admin_votes")
     k_sroki_map = {r["specialty_id"]: r["k_sroki"] for r in cursor.fetchall()}
 
-    # 4. Загружаем средние оценки Деканов и Заведующих
     cursor.execute("""
         SELECT specialty_id, role_type,
                AVG(CAST(nast_q1+nast_q2+nast_q3+nast_q4 AS REAL) / 4.0) as nast_avg,
@@ -438,33 +440,20 @@ def calculate_ratings_list(db: sqlite3.Connection):
     results = []
     for spec in specs:
         sid = spec["id"]
-        
-        # Оценки студентов
         s_stud, s_count = student_avgs.get(sid, (0.0, 0))
-        
-        # K_сроки
         k_sroki = k_sroki_map.get(sid, 0)
         
-        # Оценки Декана
         dean_data = expert_map.get(sid, {}).get("dean", {"nast": 0.0, "admin": 0.0})
         d_nast = dean_data["nast"]
         d_admin = dean_data["admin"]
         
-        # Оценки Заведующего кафедрой
         hod_data = expert_map.get(sid, {}).get("hod", {"nast": 0.0, "admin": 0.0})
         z_nast = hod_data["nast"]
         z_admin = hod_data["admin"]
 
-        # РАСЧЕТ РЕЙТИНГОВ ПО ФОРМУЛАМ
-        
-        # R_Б (Наставник) = (0.45 * Dean_nast) + (0.35 * Hod_nast) + (0.20 * Students)
         r_b = (0.45 * d_nast) + (0.35 * z_nast) + (0.20 * s_stud)
-        
-        # R_В (Администратор) = (0.50 * K_sroki) + (0.30 * Dean_admin) + (0.20 * Hod_admin)
         r_v = (0.50 * k_sroki) + (0.30 * d_admin) + (0.20 * z_admin)
         
-        # R_А (Руководитель ОПОП) = (0.35 * K_sroki) + (0.25 * Dean_total) + (0.20 * Hod_total) + (0.20 * Students)
-        # Объединенная оценка декана и заведующего как среднее между Наставником и Администратором
         d_total = (d_nast + d_admin) / 2.0
         z_total = (z_nast + z_admin) / 2.0
         r_a = (0.35 * k_sroki) + (0.25 * d_total) + (0.20 * z_total) + (0.20 * s_stud)
@@ -490,7 +479,6 @@ def calculate_ratings_list(db: sqlite3.Connection):
 def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
     ratings = calculate_ratings_list(db)
     
-    # Сводная общая статистика
     total_students = db.execute("SELECT COUNT(*) FROM student_votes").fetchone()[0]
     total_deans_votes = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean'").fetchone()[0]
     total_hods_votes = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod'").fetchone()[0]
@@ -504,13 +492,13 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
         "ratings": ratings
     }
 
-# Экспорт результатов в CSV
 @app.get("/api/admin/export/csv")
-def export_csv(db: sqlite3.Connection = Depends(get_db)):
+def export_csv(db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
+    # Защита выгрузки аналитики
+    verify_admin_auth(x_password)
     ratings = calculate_ratings_list(db)
     
     output = StringIO()
-    # Запись UTF-8 BOM для корректного открытия кириллицы в Excel
     output.write('\ufeff')
     
     writer = csv.writer(output, delimiter=';')
@@ -534,6 +522,4 @@ def export_csv(db: sqlite3.Connection = Depends(get_db)):
         headers={"Content-Disposition": "attachment; filename=opop_ratings.csv"}
     )
 
-# ---- ПОДКЛЮЧЕНИЕ СТАТИЧЕСКИХ ФАЙЛОВ ИНТЕРФЕЙСА ----
-# Подключаем папку 'static' для отдачи HTML страниц
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

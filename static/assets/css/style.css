@@ -8,6 +8,8 @@
     --card-border: rgba(0, 0, 0, 0.12);
     --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
     --card-glow: rgba(255, 255, 255, 0.7);
+    --input-bg: #ffffff;
+    --info-bg: rgba(0, 0, 0, 0.03); /* Мягкая темноватая подложка для светлой темы */
 }
 
 .dark {
@@ -19,8 +21,11 @@
     --card-border: rgba(255, 255, 255, 0.1);
     --card-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.75);
     --card-glow: rgba(255, 255, 255, 0.08);
+    --input-bg: #111827;
+    --info-bg: rgba(255, 255, 255, 0.04); /* Мягкая светлая подложка для темной темы */
 }
 
+/* Глобальные сбросы и фикс мобильной прокрутки */
 html, body {
     overflow-x: hidden !important;
     max-width: 100vw;
@@ -40,11 +45,24 @@ body {
     transition: background-color 0.4s ease, color 0.3s ease;
 }
 
-select, option {
-    background-color: var(--bg-color) !important;
+/* Контрастное отображение текстов в выпадающих списках и инпутах */
+input, select, option, textarea {
+    background-color: var(--input-bg) !important;
     color: var(--text-main) !important;
-    border-color: var(--card-border) !important;
+    border: 1px solid var(--card-border) !important;
 }
+
+/* Подложка карточки выбранного направления и других блоков информации */
+.info-block {
+    background-color: var(--info-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-main) !important;
+}
+
+/* ---- СЕМАНТИЧЕСКИЕ КЛАССЫ ЦВЕТОВ (ДЛЯ ОБХОДА ТАЙЛВИНДА В ТЕМНОЙ ТЕМЕ) ---- */
+.text-main { color: var(--text-main) !important; }
+.text-secondary { color: var(--text-secondary) !important; }
+.text-muted { color: var(--text-muted) !important; }
 
 /* ---- НАСТОЯЩЕЕ ВЫСОКОПРОИЗВОДИТЕЛЬНОЕ СТЕКЛО ---- */
 .glass-card {
@@ -78,6 +96,7 @@ select, option {
         0 25px 50px -10px rgba(0, 0, 0, 0.6);
 }
 
+/* Сферы видны только на ПК */
 .glass-blob {
     display: none;
     position: absolute;
@@ -126,7 +145,7 @@ select, option {
 
 /* ---- СТРОГОЕ УБИРАНИЕ НЕВЕРНОГО СВОЙСТВА ---- */
 .secure-input {
-    -webkit-text-security: disc !important; /* Оставлен только этот префикс */
+    -webkit-text-security: disc !important;
 }
 
 @keyframes fadeInUp {

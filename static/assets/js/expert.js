@@ -2,7 +2,6 @@ const { createApp, ref, computed, onMounted, watch } = Vue;
 
 createApp({
     setup() {
-        // Инициализируем язык и тему
         const { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses } = window.initThemeAndLang();
         const t = computed(() => window.globalTranslations[currentLang.value]);
 
@@ -88,6 +87,8 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
+                    // Сохраняем пароль в сессии для отправки в заголовках
+                    sessionStorage.setItem('expert_password', passwordInput.value);
                     authenticated.value = true;
                     await loadInitialData();
                 } else {
@@ -139,7 +140,10 @@ createApp({
             try {
                 const response = await fetch('/api/vote/expert', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Password': sessionStorage.getItem('expert_password') // Отправляем пароль для проверки на сервере
+                    },
                     body: JSON.stringify({
                         specialty_id: selectedSpec.value.id,
                         evaluator_name: selectedEvaluator.value,
@@ -153,6 +157,12 @@ createApp({
                         admin_q3: adminAnswers.value[2]
                     })
                 });
+                
+                if (response.status === 401) {
+                    alert("Сессия истекла или неверный пароль. Обновите страницу.");
+                    return;
+                }
+
                 const res = await response.json();
                 if (res.status === 'success') {
                     submitted.value = true;

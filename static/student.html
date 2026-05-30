@@ -91,17 +91,17 @@
                     </div>
                 </div>
 
-                <!-- Карточка выбранной специальности -->
-                <div v-if="selectedSpec" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <!-- Карточка выбранной специальности (заменена на info-block) -->
+                <div v-if="selectedSpec" class="mt-4 p-4 info-block rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                         <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t.selectedCardTitle }}</div>
-                        <div class="font-bold text-sm mt-0.5" style="color: var(--text-main)">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
-                        <div class="text-xs mt-1" style="color: var(--text-secondary)" v-if="selectedSpec.profile !== '-'">{{ selectedSpec.profile }}</div>
-                        <div class="text-xs" style="color: var(--text-secondary)">{{ t.instituteLabel }}: {{ selectedSpec.institute }}</div>
+                        <div class="font-bold text-sm mt-0.5 text-main">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
+                        <div class="text-xs mt-1 text-secondary" v-if="selectedSpec.profile !== '-'">{{ selectedSpec.profile }}</div>
+                        <div class="text-xs text-secondary">{{ t.instituteLabel }}: {{ selectedSpec.institute }}</div>
                     </div>
                     <div class="sm:text-right">
                         <div class="text-xs text-gray-400 uppercase">{{ t.supervisorLabel }}</div>
-                        <div class="font-bold" style="color: var(--text-main)">{{ selectedSpec.supervisor_name }}</div>
+                        <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
                     </div>
                 </div>
             </div>

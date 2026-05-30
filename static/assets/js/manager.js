@@ -2,7 +2,6 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        // Инициализируем язык и тему
         const { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses } = window.initThemeAndLang();
         const t = computed(() => window.globalTranslations[currentLang.value]);
 
@@ -40,6 +39,7 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
+                    sessionStorage.setItem('manager_password', passwordInput.value);
                     authenticated.value = true;
                     await loadManagerData();
                 } else {
@@ -71,12 +71,21 @@ createApp({
             try {
                 const response = await fetch('/api/vote/admin', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Password': sessionStorage.getItem('manager_password')
+                    },
                     body: JSON.stringify({
                         specialty_id: specId,
                         k_sroki: value
                     })
                 });
+
+                if (response.status === 401) {
+                    alert("Ошибка авторизации. Обновите страницу.");
+                    return;
+                }
+
                 const res = await response.json();
                 if (res.status === 'success') {
                     const spec = specialties.value.find(s => s.id === specId);
