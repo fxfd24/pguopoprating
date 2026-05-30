@@ -26,7 +26,8 @@
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
-                <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 text-main rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                <!-- Зафиксировали цвет: всегда серый фон и темная иконка -->
+                <div class="w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
                 <h2 class="text-xl font-bold mb-2 text-main">{{ t.accessDenied }}</h2>
