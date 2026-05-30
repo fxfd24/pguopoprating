@@ -2,7 +2,7 @@ const { createApp, ref, computed, onMounted } = Vue;
 
 createApp({
     setup() {
-        const { currentLang, theme, applyThemeClasses } = window.initThemeAndLang();
+        const { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses } = window.initThemeAndLang();
         const t = computed(() => window.globalTranslations[currentLang.value]);
 
         const authenticated = ref(false);
@@ -12,16 +12,72 @@ createApp({
         const authError = ref('');
 
         const stats = ref({ students_voted: 0, deans_voted: 0, hods_voted: 0 });
+        const instToday = ref([]); // Активность институтов за сегодня
         const ratings = ref([]);
         const searchQuery = ref('');
         const selectedInstitute = ref('');
+
+        // Функция построения микро-графиков трендов
+        const renderMiniChart = (canvasId, dataTrend) => {
+            const ctx = document.getElementById(canvasId);
+            if (!ctx) return;
+            
+            // Настройки цветов линии под темную и светлую тему
+            const isDark = document.documentElement.classList.contains('dark');
+            const lineColor = isDark ? '#6366f1' : '#4f46e5';
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Вчера', 'Сегодня', 'Прогноз'],
+                    datasets: [
+                        {
+                            data: [dataTrend[0], dataTrend[1], dataTrend[1]], // Фактическая линия
+                            borderColor: lineColor,
+                            borderWidth: 2,
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0
+                        },
+                        {
+                            data: [null, dataTrend[1], dataTrend[2]], // Пунктирная линия прогнозирования
+                            borderColor: lineColor,
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: lineColor
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        };
 
         const loadAdminData = async () => {
             try {
                 const response = await fetch('/api/admin/stats');
                 const data = await response.json();
                 stats.value = data.stats;
+                instToday.value = data.inst_today;
                 ratings.value = data.ratings;
+
+                // Строим микро-графики
+                setTimeout(() => {
+                    renderMiniChart('chart-students', data.stats.students_trend);
+                    renderMiniChart('chart-deans', data.stats.deans_trend);
+                    renderMiniChart('chart-hods', data.stats.hods_trend);
+                }, 100);
+
             } catch (err) {
                 console.error("Ошибка загрузки сводных данных админки:", err);
             }
@@ -56,13 +112,18 @@ createApp({
             }
         };
 
-        // Извлекаем список уникальных институтов для фильтра
+        // Топ-3 лидера-руководителя по коэффициенту R_A
+        const topLeaders = computed(() => {
+            return [...ratings.value]
+                .sort((a, b) => b.r_a - a.r_a)
+                .slice(0, 3);
+        });
+
         const uniqueInstitutes = computed(() => {
             const set = new Set(ratings.value.map(r => r.institute));
             return Array.from(set).filter(Boolean).sort();
         });
 
-        // Фильтрация данных
         const filteredRatings = computed(() => {
             let list = ratings.value;
             
@@ -82,14 +143,11 @@ createApp({
             return list;
         });
 
-        // Прямая защищенная выгрузка CSV на компьютер
         const downloadCSV = async () => {
             const password = sessionStorage.getItem('admin_password');
             try {
                 const response = await fetch('/api/admin/export/csv', {
-                    headers: {
-                        'X-Password': password
-                    }
+                    headers: { 'X-Password': password }
                 });
                 
                 if (response.status === 401) {
@@ -111,10 +169,6 @@ createApp({
             }
         };
 
-        onMounted(() => {
-            applyThemeClasses();
-        });
-
         return {
             currentLang,
             theme,
@@ -126,6 +180,8 @@ createApp({
             authError,
             verifyPassword,
             stats,
+            instToday,
+            topLeaders,
             searchQuery,
             selectedInstitute,
             uniqueInstitutes,

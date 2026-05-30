@@ -113,3 +113,28 @@ window.initThemeAndLang = () => {
 
     return { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses };
 };
+
+// Автоматический инжект кнопки "Наверх" на все страницы при их загрузке
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.createElement('div');
+    btn.className = 'back-to-top glass-card shadow-2xl';
+    btn.innerHTML = '<i class="fa-solid fa-arrow-up text-lg text-main"></i>';
+    document.body.appendChild(btn);
+
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        // Появляется только если прокрутили ниже 300px И крутим наверх
+        if (currentScrollY > 300 && currentScrollY < lastScrollY) {
+            btn.classList.add('back-to-top-show');
+        } else {
+            btn.classList.remove('back-to-top-show');
+        }
+        lastScrollY = currentScrollY;
+    });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});

@@ -72,10 +72,13 @@
         <!-- ================= ГЛАВНАЯ ФОРМА ОЦЕНКИ ================= -->
         <div v-else>
             
-            <!-- Успешная отправка -->
-            <div v-if="submitted" class="glass-card rounded-3xl p-8 text-center shadow-xl">
-                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fa-solid fa-check text-2xl"></i>
+            <!-- Успешная отправка (с красивой анимированной галочкой) -->
+            <div v-if="submitted" class="glass-card rounded-3xl p-8 text-center shadow-xl animate-entrance">
+                <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <svg class="w-16 h-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                        <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="checkmark-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
                 </div>
                 <h2 class="text-2xl font-bold mb-2 text-main">Оценка успешно сохранена!</h2>
                 <p class="mb-6 text-secondary">Ваши оценки руководителю программы приняты бэкендом системы.</p>

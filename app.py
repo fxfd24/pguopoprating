@@ -479,16 +479,52 @@ def calculate_ratings_list(db: sqlite3.Connection):
 def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
     ratings = calculate_ratings_list(db)
     
+    # 1. Сводная статистика
     total_students = db.execute("SELECT COUNT(*) FROM student_votes").fetchone()[0]
-    total_deans_votes = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean'").fetchone()[0]
-    total_hods_votes = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod'").fetchone()[0]
-    
+    total_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean'").fetchone()[0]
+    total_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod'").fetchone()[0]
+
+    # 2. Статистика ЗА СЕГОДНЯ (+ голоса)
+    today_students = db.execute("SELECT COUNT(*) FROM student_votes WHERE date(timestamp) = date('now', 'localtime')").fetchone()[0]
+    today_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean' AND date(timestamp) = date('now', 'localtime')").fetchone()[0]
+    today_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod' AND date(timestamp) = date('now', 'localtime')").fetchone()[0]
+
+    # 3. Статистика ЗА ВЧЕРА (для расчета тренда)
+    yesterday_students = db.execute("SELECT COUNT(*) FROM student_votes WHERE date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
+    yesterday_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean' AND date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
+    yesterday_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod' AND date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
+
+    # Расчет линейного прогноза на завтра: Прогноз = Сегодня + (Сегодня - Вчера)
+    proj_students = max(0, today_students + (today_students - yesterday_students))
+    proj_deans = max(0, today_deans + (today_deans - yesterday_deans))
+    proj_hods = max(0, today_hods + (today_hods - yesterday_hods))
+
+    # 4. Лидеры-институты по количеству пришедших голосов за сегодня
+    inst_today_query = """
+        SELECT s.institute, COUNT(*) as vote_count
+        FROM student_votes sv
+        JOIN specialties s ON sv.specialty_id = s.id
+        WHERE date(sv.timestamp) = date('now', 'localtime')
+        GROUP BY s.institute
+        ORDER BY vote_count DESC
+    """
+    inst_today = [dict(r) for r in db.execute(inst_today_query).fetchall()]
+
     return {
         "stats": {
             "students_voted": total_students,
-            "deans_voted": total_deans_votes,
-            "hods_voted": total_hods_votes,
+            "students_today": today_students,
+            "students_trend": [yesterday_students, today_students, proj_students],
+
+            "deans_voted": total_deans,
+            "deans_today": today_deans,
+            "deans_trend": [yesterday_deans, today_deans, proj_deans],
+
+            "hods_voted": total_hods,
+            "hods_today": today_hods,
+            "hods_trend": [yesterday_hods, today_hods, proj_hods],
         },
+        "inst_today": inst_today,
         "ratings": ratings
     }
 
