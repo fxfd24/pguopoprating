@@ -194,7 +194,13 @@ createApp({
 
                 const res = await response.json();
                 if (res.status === 'success') {
-                    submitted.value = true;
+                    // Плавный скролл наверх
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // Показываем галочку успеха через 400мс
+                    setTimeout(() => {
+                        submitted.value = true;
+                    }, 400);
                 } else {
                     alert("Ошибка сохранения результатов");
                 }

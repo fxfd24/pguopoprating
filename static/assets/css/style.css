@@ -290,3 +290,17 @@ input, textarea {
     width: 100px;
     height: 50px;
 }
+
+/* ---- АКЦЕНТНАЯ ПЛИТКА ОБУЧАЮЩИХСЯ ---- */
+.glass-card-accent {
+    background: rgba(255, 255, 255, 0.28) !important; /* Чуть светлее остальных */
+    border: 1px solid rgba(0, 0, 0, 0.25) !important;  /* Более контрастная граница */
+    box-shadow: 
+        inset 0 1.5px 1.5px 0 rgba(255, 255, 255, 0.95),
+        0 15px 35px -5px rgba(0, 0, 0, 0.08) !important;
+}
+
+.dark .glass-card-accent {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}

@@ -37,7 +37,7 @@ createApp({
             "Прикладная информатика в менеджменте": "Applied Informatics in Management",
             "Информационная безопасность": "Information Security",
             "Организация и технологии защиты информации": "Organization and Technologies of Information Protection",
-            "Управление информационной безопасностью и технологии защиты информации": "Information Security Management and Protection Technologies",
+            "Управление информационной безупречностью и технологии защиты информации": "Information Security Management and Protection Technologies",
             "Мехатроника и робототехника": "Mechatronics and Robotics",
             "Интеллектуальная сервисная робототехника": "Intelligent Service Robotics",
             "Землеустройство": "Land Management",
@@ -202,7 +202,7 @@ createApp({
             "Рекреация и спортивно-оздоровительный туризм": "Recreation and Sports-Health Tourism",
             "Рекреационно-оздоровительная деятельность": "Recreation and Health Activity",
             "Социально-культурная деятельность": "Social and Cultural Activity",
-            "Менеджмент социально-культурной деятельности": "Management of Social and Cultural Activity",
+            "Менеджмент социально-культурной деятельность": "Management of Social and Cultural Activity",
             "Литературное творчество": "Literary Creation",
             "Литературный работник, переводчик художественной литературы": "Literary Worker, Translator of Fiction",
             "Дизайн": "Design",
@@ -271,7 +271,9 @@ createApp({
                 specialties.value = rawData.map(s => ({
                     ...s,
                     name: translateText(s.name),
-                    profile: translateText(s.profile)
+                    profile: translateText(s.profile),
+                    // ИСПРАВЛЕНО: добавили перевод руководителя!
+                    supervisor_name: window.translateSupervisor(s.supervisor_name, currentLang.value)
                 }));
             } catch (error) {
                 console.error("Ошибка при получении списка направлений:", error);
@@ -299,6 +301,7 @@ createApp({
                    answers.value.q1 && answers.value.q2 && answers.value.q3 && answers.value.q4 && answers.value.q5;
         });
 
+        // Отправка голоса с автоматической плавной прокруткой до верха перед показом галочки успеха
         const submitVote = async () => {
             if (!isFormValid.value) return;
             loading.value = true;
@@ -313,7 +316,13 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    submitted.value = true;
+                    // 1. Плавный скролл наверх
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    // 2. Показываем красивую анимированную галочку успеха ровно через 400мс
+                    setTimeout(() => {
+                        submitted.value = true;
+                    }, 400);
                 } else {
                     alert("Произошла ошибка при сохранении голоса / Error saving vote");
                 }

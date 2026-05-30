@@ -7,6 +7,105 @@
     }
 })();
 
+// Словарь транслитерации руководителей для английской версии ОПОП
+const supervisorTranslations = {
+    "Воробьев Г.А.": "Vorobiev G.A.",
+    "Минец К.Г.": "Minets K.G.",
+    "Таран О.Л.": "Taran O.L.",
+    "Фалеева А.Ю.": "Faleeva A.Y.",
+    "Боднева Н.А.": "Bodneva N.A.",
+    "Дмитриенко Б.Ч.": "Dmitrienko B.C.",
+    "Голубич С.А": "Golubich S.A.",
+    "Рубец Е.А.": "Rubets E.A.",
+    "Малых М.С.": "Malykh M.S.",
+    "Павленко И.И.": "Pavlenko I.I.",
+    "Тимченко О.В.": "Timchenko O.V.",
+    "Арзуманова С.М.": "Arzumanova S.M.",
+    "Головина Ю.Е.": "Golovina Y.E.",
+    "Шаповалова М.Л.": "Shapovalova M.L.",
+    "Хребина С.В.": "Khrebina S.V.",
+    "Минец К.С.": "Minets K.S.",
+    "Медведева В.П.": "Medvedeva V.P.",
+    "Кобзева М.С.": "Kobzeva M.S.",
+    "Соловьева Е.А.": "Solovieva E.A.",
+    "Килинкарова С.Г.": "Kilinkarova S.G.",
+    "Ерёмина О.С.": "Eremina O.S.",
+    "Кобышева Е.И.": "Kobysheva E.I.",
+    "Май-Борода Г.Н.": "May-Boroda G.N.",
+    "Чекменев Д.С.": "Chekmenev D.S.",
+    "Чекменёв Д.С.": "Chekmenev D.S.",
+    "Давыдова Е.В.": "Davydova E.V.",
+    "Трапезникова Н.В.": "Trapeznikova N.V.",
+    "Вильгоненко И.М.": "Vilgonenko I.M.",
+    "Клычев Р.А.": "Klychev R.A.",
+    "Анферова О.А.": "Anferova O.A.",
+    "Серикова С.В.": "Serikova S.V.",
+    "Бабошина Е.В.": "Baboshina E.V.",
+    "Валяровский Ф.И.": "Valyarovsky F.I.",
+    "Акименко М.А.": "Akimenko M.A.",
+    "Попов А.П.": "Popov A.P.",
+    "Некрасов Е.Е.": "Nekrasov E.E.",
+    "Кандыба Р.А.": "Kandyba R.A.",
+    "Текеева М.У.": "Tekeeva M.U.",
+    "Герейханова И.А.": "Gereikhanova I.A.",
+    "Герейханова  И.А": "Gereikhanova I.A.",
+    "Миллер И.С.": "Miller I.S.",
+    "Гикис С.Н.": "Gikis S.N.",
+    "Ануфриенко С.В.": "Anufrienko S.V.",
+    "Долгих К. С.": "Dolgikh K.S.",
+    "Савич А.С.": "Savich A.S.",
+    "Литвинова Ю.В.": "Litvinova Y.V.",
+    "Алексеева М.А.": "Alekseeva M.A.",
+    "Срибная Т.А.": "Sribnaya T.A.",
+    "Гончарова Е.Н.": "Goncharova E.N.",
+    "Мельникова Е.Н.": "Melnikova E.N.",
+    "Петренко С.А.": "Petrenko S.A.",
+    "Петренко А.Ф.": "Petrenko A.F.",
+    "Тен Э.Г.": "Ten E.G.",
+    "Рыжук А.В.": "Ryzhuk A.V.",
+    "Маслова О.Б.": "Maslova O.B.",
+    "Павлова Ю.В.": "Pavlova Y.V.",
+    "Хачатурова К.Г.": "Khachaturova K.G.",
+    "Голик Н.А.": "Golik N.A.",
+    "Долматова О.В.": "Dolmatova O.V.",
+    "Федотова И.Б.": "Fedotova I.B.",
+    "Тищенко С.В.": "Tishchenko S.V.",
+    "Елькин В.В.": "Elkin V.V.",
+    "Москаленко К.О.": "Moskalenko K.O.",
+    "Кобякова И.А.": "Kobyakova I.A.",
+    "Чабанова А.А.": "Chabanova A.A.",
+    "Коломиец Е.А.": "Kolomiets E.A.",
+    "Пылев А.И.": "Pylev A.I.",
+    "Бродская М.С.": "Brodskaya M.S.",
+    "Магомедова П.М.": "Magomedova P.M.",
+    "Магомедова П.М..": "Magomedova P.M.",
+    "Иванова О.Е.": "Ivanova O.E.",
+    "Гаджимурадова М.Г.": "Gadzhimuradova M.G.",
+    "Саркисян М.Р.": "Sarkisyan M.R.",
+    "Горохова Л.А.": "Gorokhova L.A.",
+    "Халеева С.А.": "Khaleeva S.A.",
+    "Ширяева Т.А.": "Shiryaeva T.A.",
+    "Курских О.В.": "Kurskikh O.V.",
+    "Шавкун Н.С.": "Shavkun N.S.",
+    "Гетманова Е.С.": "Getmanova E.S.",
+    "Николаенко Н.Д.": "Nikolaenko N.D.",
+    "Ермаков В.П.": "Ermakov V.P.",
+    "Суховская Д.Н.": "Sukhovskaya D.N.",
+    "Осипов С.К.": "Osipov S.K.",
+    "Имнаев Ш.А.": "Imnaev S.A.",
+    "Маилян Э.Г.": "Mailyan E.G.",
+    "Бабаян А.В.": "Babayan A.V.",
+    "Шульженко В.И.": "Shulzhenko V.I.",
+    "Чубарева О.В.": "Chubareva O.V.",
+    "Еремкина Н.В.": "Eremkina N.V."
+};
+
+// Функция автоматического перевода ФИО руководителя
+window.translateSupervisor = (name, lang) => {
+    if (lang === 'ru') return name;
+    return supervisorTranslations[name] || name;
+};
+
 window.globalTranslations = {
     ru: {
         headerTitle: "Оценка ОПОП",
@@ -31,7 +130,7 @@ window.globalTranslations = {
         submittedTitle: "Спасибо за участие!",
         submittedDesc: "Ваша оценка успешно принята. Вы помогаете сделать образовательный процесс лучше.",
         loading: "Сохранение...",
-        saveBtn: "Отправить оценку",
+        saveBtn: "Отправить Оценку",
         
         // Поля выбора студента
         selectSpecialtyLabel: "Направление подготовки (поиск по коду или названию)",
@@ -40,7 +139,6 @@ window.globalTranslations = {
         instituteLabel: "Институт",
         supervisorLabel: "Руководитель ОПОП",
 
-        // Секретный шлюз (Исправлено: добавлены утерянные переводы!)
         accessDenied: "Доступ ограничен",
         enterPassword: "Пожалуйста, введите пароль доступа для продолжения.",
         passwordPlaceholder: "Введите пароль...",
@@ -78,7 +176,6 @@ window.globalTranslations = {
         instituteLabel: "Institute/School",
         supervisorLabel: "Program Supervisor",
 
-        // Секретный шлюз
         accessDenied: "Access Restricted",
         enterPassword: "Please enter the access password to continue.",
         passwordPlaceholder: "Enter password...",
@@ -114,42 +211,14 @@ window.initThemeAndLang = () => {
     return { currentLang, theme, toggleLang, toggleTheme, applyThemeClasses };
 };
 
-// Автоматический инжект кнопки "Наверх" на все страницы при их загрузке
-document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.createElement('div');
-    btn.className = 'back-to-top glass-card shadow-2xl';
-    btn.innerHTML = '<i class="fa-solid fa-arrow-up text-lg text-main"></i>';
-    document.body.appendChild(btn);
-
-    let lastScrollY = window.scrollY;
-    
-    window.addEventListener('scroll', () => {
-        const currentScrollY = window.scrollY;
-        // Появляется только если прокрутили ниже 300px И крутим наверх
-        if (currentScrollY > 300 && currentScrollY < lastScrollY) {
-            btn.classList.add('back-to-top-show');
-        } else {
-            btn.classList.remove('back-to-top-show');
-        }
-        lastScrollY = currentScrollY;
-    });
-
-    btn.addEventListener('click', () => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-});
-
-// 4. Автономный менеджер сессий (срок жизни - 24 часа)
 window.authSession = {
-    // Сохранить пароль с ограничением по времени
     save: (role, password) => {
         const sessionData = {
             password: password,
-            expiresAt: Date.now() + 24 * 60 * 60 * 1000 // Текущее время + 24 часа в миллисекундах
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000
         };
         localStorage.setItem('auth_session_' + role, JSON.stringify(sessionData));
     },
-    // Получить сохраненный пароль, если он еще не истек
     get: (role) => {
         const raw = localStorage.getItem('auth_session_' + role);
         if (!raw) return null;
@@ -166,8 +235,30 @@ window.authSession = {
             return null;
         }
     },
-    // Очистить сессию (разлогиниться)
     clear: (role) => {
         localStorage.removeItem('auth_session_' + role);
     }
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.createElement('div');
+    btn.className = 'back-to-top glass-card shadow-2xl';
+    btn.innerHTML = '<i class="fa-solid fa-arrow-up text-lg text-main"></i>';
+    document.body.appendChild(btn);
+
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', () => {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY > 300 && currentScrollY < lastScrollY) {
+            btn.classList.add('back-to-top-show');
+        } else {
+            btn.classList.remove('back-to-top-show');
+        }
+        lastScrollY = currentScrollY;
+    });
+
+    btn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+});

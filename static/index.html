@@ -7,6 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- ПОДКЛЮЧЕН ОФИЦИАЛЬНЫЙ ЛОГОТИП ПГУ В КАЧЕСТВЕ ФАВИКОНА -->
+    <link rel="icon" href="https://pgu.ru/images/pgu/logo.png">
+    
     <script src="/assets/js/shared.js"></script>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -17,7 +21,7 @@
 
     <div id="app" v-cloak class="min-h-screen flex flex-col justify-between">
         
-        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ (Позиционирование в верхнем ПРАВОМ углу на ПК) -->
+        <!-- АДАПТИВНЫЙ ПЛАВАЮЩИЙ ВИДЖЕТ -->
         <div id="floating-panel" class="fixed bottom-6 right-6 md:absolute md:top-6 md:right-6 md:left-auto md:bottom-auto z-40 glass-card p-2 flex items-center space-x-3 shadow-2xl floating-widget w-max">
             <button @click="toggleLang" class="flex items-center space-x-1.5 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all text-sm font-bold focus:outline-none">
                 <span style="color: var(--text-main)">{{ currentLang === 'ru' ? '🇷🇺 RU' : '🇬🇧 EN' }}</span>
@@ -30,10 +34,11 @@
         </div>
 
         <!-- Хедер -->
-        <header class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
+        <header id="header-parallax" class="w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between parallax-smooth">
             <div class="flex items-center space-x-3">
-                <div class="bg-black dark:bg-white text-white dark:text-black p-2.5 rounded-xl shadow-lg">
-                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                <!-- ВНЕДРЕНА КРАСИВАЯ БЕЛАЯ ПОДЛОЖКА С СКРУГЛЕННЫМИ УГЛАМИ И ЛОГОТИПОМ ПГУ -->
+                <div class="w-14 h-14 bg-white p-1.5 rounded-2xl shadow-lg border border-gray-200/50 flex items-center justify-center overflow-hidden">
+                    <img src="https://pgu.ru/images/pgu/logo.png" alt="ПГУ Логотип" class="w-full h-full object-contain rounded-xl">
                 </div>
                 <div>
                     <span class="font-bold text-lg tracking-wide block uppercase" style="color: var(--text-main)">
@@ -50,7 +55,7 @@
         <main class="flex-grow flex items-center justify-center px-4 py-8">
             <div class="max-w-4xl w-full">
                 
-                <div class="text-center mb-12 animate-entrance">
+                <div id="text-parallax" class="text-center mb-12 animate-entrance parallax-smooth">
                     <h1 class="text-3xl font-extrabold tracking-tight sm:text-5xl mb-4 leading-tight" style="color: var(--text-main)">
                         {{ t.mainTitle }}
                     </h1>
@@ -60,10 +65,10 @@
                 </div>
 
                 <!-- Сетка ролей -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-entrance" style="animation-delay: 0.15s;">
+                <div id="grid-parallax" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-entrance parallax-smooth" style="animation-delay: 0.15s;">
                     
-                    <!-- Карта: Студент -->
-                    <a href="/student.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                    <!-- Карта: Студент (ИСПРАВЛЕНО: добавили glass-card-accent для выделения) -->
+                    <a href="/student.html" class="glass-card glass-card-accent glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
                         <div>
                             <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
                                 <i class="fa-solid fa-user-graduate text-xl"></i>
