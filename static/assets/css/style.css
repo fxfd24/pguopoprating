@@ -11,7 +11,6 @@
     --input-bg: #ffffff;
     --info-bg: rgba(0, 0, 0, 0.03);
     
-    /* Сообщаем браузеру, что документ светлый */
     color-scheme: light;
 }
 
@@ -27,7 +26,6 @@
     --input-bg: #111827;
     --info-bg: rgba(255, 255, 255, 0.04);
     
-    /* Сообщаем браузеру, что документ переключился в темную тему */
     color-scheme: dark;
 }
 
@@ -50,14 +48,18 @@ body {
     transition: background-color 0.4s ease, color 0.3s ease;
 }
 
-/* Нативные селекты и опции (идеально рендерятся браузером благодаря color-scheme) */
-select {
-    background-color: var(--input-bg) !important;
-    color: var(--text-main) !important;
-    border: 1px solid var(--card-border) !important;
+select, option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Инпуты ввода */
+.dark select, .dark option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
 input, textarea {
     background-color: var(--input-bg) !important;
     color: var(--text-main) !important;
@@ -70,7 +72,23 @@ input, textarea {
     color: var(--text-main) !important;
 }
 
-/* Семантические классы контрастности */
+/* ---- ВЫПАДАЮЩИЕ МЕНЮ ПОИСКА НАПРАВЛЕНИЙ (DROPDOWNS) ---- */
+.dropdown-menu {
+    background-color: var(--input-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-main) !important;
+}
+
+.dropdown-item {
+    color: var(--text-main) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+    transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: var(--info-bg) !important;
+}
+
 .text-main { color: var(--text-main) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-muted { color: var(--text-muted) !important; }
