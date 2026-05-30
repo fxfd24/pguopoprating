@@ -15,7 +15,7 @@ createApp({
         const searchQuery = ref('');
         
         // Оптимизация производительности: Бесконечный скролл (Lazy Loading)
-        const displayLimit = ref(15); // Изначально рендерим только 15 блоков
+        const displayLimit = ref(4); // Изначально рендерим только 15 блоков
         
         const localChanges = ref({}); 
         const saveLoading = ref(false);
@@ -79,7 +79,7 @@ createApp({
         const handleInfiniteScroll = () => {
             if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 150) {
                 if (displayLimit.value < filteredSpecialties.value.length) {
-                    displayLimit.value += 15; // Подгружаем по 15 штук при скролле к низу
+                    displayLimit.value += 3; // Подгружаем строго по 3 штуки при скролле к низу
                 }
             }
         };
