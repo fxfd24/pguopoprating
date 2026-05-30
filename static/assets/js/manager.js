@@ -1,4 +1,4 @@
-const { createApp, ref, computed, onMounted } = Vue;
+const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
 
 createApp({
     setup() {
@@ -14,8 +14,10 @@ createApp({
         const specialties = ref([]);
         const searchQuery = ref('');
         
-        // Локальное хранилище изменений перед сохранением
-        const localChanges = ref({}); // { spec_id: value }
+        // Оптимизация производительности: Бесконечный скролл (Lazy Loading)
+        const displayLimit = ref(15); // Изначально рендерим только 15 блоков
+        
+        const localChanges = ref({}); 
         const saveLoading = ref(false);
 
         const loadManagerData = async () => {
@@ -47,6 +49,7 @@ createApp({
                     sessionStorage.setItem('manager_password', trimmedPass);
                     authenticated.value = true;
                     await loadManagerData();
+                    setupScrollListener(); // Активируем ленивую загрузку после авторизации
                 } else {
                     authError.value = res.message || "Неверный пароль";
                 }
@@ -67,7 +70,24 @@ createApp({
             );
         });
 
-        // Получить текущее значение (учитывая локальные несохраненные изменения)
+        // Срез для отображения (рендерит только видимую часть)
+        const visibleSpecialties = computed(() => {
+            return filteredSpecialties.value.slice(0, displayLimit.value);
+        });
+
+        // Бесконечная ленивая загрузка
+        const handleInfiniteScroll = () => {
+            if ((window.innerHeight + window.scrollY) >= document.documentElement.scrollHeight - 150) {
+                if (displayLimit.value < filteredSpecialties.value.length) {
+                    displayLimit.value += 15; // Подгружаем по 15 штук при скролле к низу
+                }
+            }
+        };
+
+        const setupScrollListener = () => {
+            window.addEventListener('scroll', handleInfiniteScroll);
+        };
+
         const getKSrokiValue = (specId) => {
             if (localChanges.value[specId] !== undefined) {
                 return localChanges.value[specId];
@@ -76,22 +96,28 @@ createApp({
             return spec ? spec.k_sroki : 0;
         };
 
-        // Запись изменений локально без отправки на сервер
         const setKSrokiLocal = (specId, value) => {
             localChanges.value[specId] = value;
         };
 
-        // Есть ли несохраненные изменения
         const hasChanges = computed(() => {
             return Object.keys(localChanges.value).length > 0;
         });
 
-        // Сохранить все накопленные изменения одним кликом на сервер
+        const showSuccessToast = () => {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.classList.add('toast-notification-show');
+                setTimeout(() => {
+                    toast.classList.remove('toast-notification-show');
+                }, 3000);
+            }
+        };
+
         const saveAllManagerData = async () => {
             if (!hasChanges.value) return;
             saveLoading.value = true;
             try {
-                // Отправляем все локальные изменения по очереди
                 for (const [specId, value] of Object.entries(localChanges.value)) {
                     await fetch('/api/vote/admin', {
                         method: 'POST',
@@ -106,11 +132,9 @@ createApp({
                     });
                 }
                 
-                // Перезагружаем свежие данные с бэкенда
                 await loadManagerData();
-                // Очищаем локальный буфер изменений
                 localChanges.value = {};
-                alert("Все изменения K_сроки успешно сохранены на сервере!");
+                showSuccessToast(); // Вызываем красивый анимированный тост вместо алерта!
             } catch (err) {
                 console.error("Ошибка пакетного сохранения:", err);
                 alert("Произошла ошибка при сохранении данных.");
@@ -118,6 +142,10 @@ createApp({
                 saveLoading.value = false;
             }
         };
+
+        onUnmounted(() => {
+            window.removeEventListener('scroll', handleInfiniteScroll);
+        });
 
         onMounted(() => {
             applyThemeClasses();
@@ -137,6 +165,7 @@ createApp({
             verifyPassword,
             searchQuery,
             filteredSpecialties,
+            visibleSpecialties,
             getKSrokiValue,
             setKSrokiLocal,
             hasChanges,

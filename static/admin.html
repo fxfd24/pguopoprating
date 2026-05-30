@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель Аналитики | Оценка ОПОП</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <script src="/assets/js/shared.js"></script>
+</head>
+<body class="py-8 px-4">
+
+    <div class="glass-blob blob-light-1"></div>
+    <div class="glass-blob blob-light-2"></div>
+    <div class="glass-blob blob-light-3"></div>
+
+    <div id="app" v-cloak class="max-w-6xl mx-auto animate-entrance">
+        
+        <!-- Кнопка Назад -->
+        <a href="/" class="inline-flex items-center space-x-2 text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors mb-6 font-semibold">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>{{ t.goHome }}</span>
+        </a>
+
+        <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
+        <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+            <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
+                <div class="w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+                    <i class="fa-solid fa-lock text-xl"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2 text-main">Административная панель</h2>
+                <p class="text-sm mb-6 text-secondary">Введите пароль администратора для получения доступа к аналитическим данным.</p>
+                
+                <div class="space-y-4">
+                    <div class="relative">
+                        <input type="text" 
+                               v-model="passwordInput" 
+                               @keyup.enter="verifyPassword"
+                               :placeholder="t.passwordPlaceholder" 
+                               :class="{'secure-input': !showPassword}"
+                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
+                        
+                        <button @click.stop.prevent="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                            <i v-if="showPassword" class="fa-solid fa-eye-slash"></i>
+                            <i v-else class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    
+                    <button @click="verifyPassword"
+                            :disabled="authLoading"
+                            class="w-full bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 text-white dark:text-black py-3 rounded-xl font-bold shadow-md transition-all">
+                        <span v-if="authLoading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
+                        <span v-else>{{ t.loginBtn }}</span>
+                    </button>
+                    <p v-if="authError" class="text-xs text-red-500 font-semibold mt-2">{{ authError }}</p>
+
+                    <div class="pt-4 border-t border-gray-200/20 mt-4">
+                        <a href="/" class="inline-flex items-center space-x-2 text-xs font-bold text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                            <i class="fa-solid fa-arrow-left"></i>
+                            <span>{{ t.goHomeBtn }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= СВОДНЫЕ СТАТИСТИКИ И АНАЛИТИКА ================= -->
+        <div v-else class="space-y-8">
+            
+            <!-- Карточки счетчиков -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div class="glass-card p-6 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-gray-400 uppercase">Голосов студентов</span>
+                        <h3 class="text-3xl font-black text-main mt-1">{{ stats.students_voted }}</h3>
+                    </div>
+                    <div class="text-3xl text-gray-400"><i class="fa-solid fa-user-graduate"></i></div>
+                </div>
+
+                <div class="glass-card p-6 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-gray-400 uppercase">Оценок Деканов</span>
+                        <h3 class="text-3xl font-black text-main mt-1">{{ stats.deans_voted }}</h3>
+                    </div>
+                    <div class="text-3xl text-gray-400"><i class="fa-solid fa-user-tie"></i></div>
+                </div>
+
+                <div class="glass-card p-6 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-gray-400 uppercase">Оценок Зав. кафедрами</span>
+                        <h3 class="text-3xl font-black text-main mt-1">{{ stats.hods_voted }}</h3>
+                    </div>
+                    <div class="text-3xl text-gray-400"><i class="fa-solid fa-chalkboard-user"></i></div>
+                </div>
+
+            </div>
+
+            <!-- Таблица результатов -->
+            <div class="glass-card p-6 sm:p-8 shadow-xl">
+                
+                <!-- Поиск и фильтры -->
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-gray-200/50 pb-6 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-main">Сводные рейтинги ОПОП</h2>
+                        <p class="text-xs text-secondary mt-0.5">Полный список расчитанных критериев A, Б, В по всем направлениям подготовки.</p>
+                    </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <!-- Фильтр Институтов -->
+                        <select v-model="selectedInstitute" class="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none">
+                            <option value="">Все институты</option>
+                            <option v-for="inst in uniqueInstitutes" :key="inst" :value="inst">{{ inst }}</option>
+                        </select>
+
+                        <!-- Поиск -->
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" 
+                                   v-model="searchQuery" 
+                                   placeholder="Код, ОПОП или Руководитель..." 
+                                   class="w-full pl-4 pr-10 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                            <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-gray-400"></i>
+                        </div>
+
+                        <!-- Кнопка выгрузки CSV -->
+                        <button @click="downloadCSV" class="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-900 dark:hover:bg-gray-100 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5">
+                            <i class="fa-solid fa-file-excel text-base"></i>
+                            <span>Экспорт в CSV</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Таблица данных -->
+                <div class="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/30">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50/50 dark:bg-black/10 border-b border-gray-100 dark:border-gray-800 font-bold text-main">
+                                <th class="p-4 w-24">Код</th>
+                                <th class="p-4 min-w-56">Программа подготовки / Институт</th>
+                                <th class="p-4">Руководитель</th>
+                                <th class="p-4 text-center">Голосов</th>
+                                <th class="p-4 text-center">K_сроки</th>
+                                <th class="p-4 text-center">Студ. балл</th>
+                                <th class="p-4 text-center font-bold bg-indigo-50/20">R_A (Рук-ль)</th>
+                                <th class="p-4 text-center font-bold bg-violet-50/20">R_Б (Наст-к)</th>
+                                <th class="p-4 text-center font-bold bg-purple-50/20">R_В (Админ)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="r in filteredRatings" :key="r.id" class="border-b border-gray-100/50 dark:border-gray-800/50 hover:bg-white/40 transition-colors">
+                                <td class="p-4 font-bold text-main">{{ r.code }}</td>
+                                <td class="p-4">
+                                    <div class="font-bold text-main text-xs">{{ r.spec_name }}</div>
+                                    <div class="text-xxs text-secondary mt-0.5">Институт: {{ r.institute }}</div>
+                                </td>
+                                <td class="p-4 font-semibold text-secondary text-xs">{{ r.supervisor_name }}</td>
+                                <td class="p-4 text-center text-secondary">{{ r.voters_count }}</td>
+                                <td class="p-4 text-center font-semibold text-main">{{ r.k_sroki || '-' }}</td>
+                                <td class="p-4 text-center text-main font-semibold">{{ r.student_avg }}</td>
+                                <td class="p-4 text-center font-black bg-indigo-50/10 text-indigo-600 dark:text-indigo-400 text-sm">{{ r.r_a }}</td>
+                                <td class="p-4 text-center font-black bg-violet-50/10 text-violet-600 dark:text-violet-400 text-sm">{{ r.r_b }}</td>
+                                <td class="p-4 text-center font-black bg-purple-50/10 text-purple-600 dark:text-purple-400 text-sm">{{ r.r_v }}</td>
+                            </tr>
+                            <tr v-if="filteredRatings.length === 0">
+                                <td colspan="9" class="p-8 text-center text-gray-400">Данные не найдены</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="/assets/js/admin.js"></script>
+</body>
+</html>
