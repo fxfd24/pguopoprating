@@ -27,7 +27,6 @@
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
-                <!-- Зафиксировали цвет: всегда серый фон и темная иконка -->
                 <div class="w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
@@ -35,17 +34,17 @@
                 <p class="text-sm mb-6 text-secondary">{{ t.enterPassword }}</p>
                 
                 <div class="space-y-4">
-                    <!-- Контейнер пароля с глазиком -->
+                    <!-- Поле с глазиком -->
                     <div class="relative">
                         <input type="text" 
                                v-model="passwordInput" 
                                @keyup.enter="verifyPassword"
                                :placeholder="t.passwordPlaceholder" 
                                :class="{'secure-input': !showPassword}"
-                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
+                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
                         
-                        <!-- Кнопка-глазик -->
-                        <button @click="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                        <!-- Заблокировали вызов клавиатуры через @click.stop.prevent -->
+                        <button @click.stop.prevent="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
                             <i v-if="showPassword" class="fa-solid fa-eye-slash"></i>
                             <i v-else class="fa-solid fa-eye"></i>
                         </button>
@@ -96,13 +95,13 @@
                         <label class="block text-sm font-bold mb-2 text-main">1. Ваша роль</label>
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="setRole('dean')" 
-                                    :class="[roleType === 'dean' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900']"
-                                    class="border py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                                    :class="[roleType === 'dean' ? 'btn-active' : 'btn-inactive']"
+                                    class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
                                 Декан
                             </button>
                             <button @click="setRole('hod')" 
-                                    :class="[roleType === 'hod' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900']"
-                                    class="border py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                                    :class="[roleType === 'hod' ? 'btn-active' : 'btn-inactive']"
+                                    class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
                                 Зав. кафедрой
                             </button>
                         </div>
@@ -111,7 +110,7 @@
                     <div>
                         <label class="block text-sm font-bold mb-2 text-main">2. Ваше имя (выберите из списка)</label>
                         <select v-model="selectedEvaluator" 
-                                class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                                class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                             <option value="" disabled>-- Выберите ФИО --</option>
                             <option v-for="name in currentEvaluatorsList" :key="name" :value="name">{{ name }}</option>
                         </select>
@@ -126,14 +125,15 @@
                                v-model="searchQuery" 
                                @focus="showDropdown = true"
                                placeholder="Введите код или название ОПОП..." 
-                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                               class="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                         <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
 
-                        <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                        <!-- ИСПРАВЛЕНО: применили класс dropdown-menu и dropdown-item -->
+                        <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-y-auto dropdown-menu">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
                                  @click="selectSpecialty(spec)"
-                                 class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
+                                 class="px-4 py-3 cursor-pointer text-sm last:border-none dropdown-item">
                                 <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                             </div>
                         </div>
@@ -158,7 +158,7 @@
                     <!-- БЛОК А: НАСТАВНИК -->
                     <div class="border-t border-gray-200/50 pt-6">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
-                            <span class="bg-gray-100 dark:bg-gray-800 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
+                            <span class="bg-gray-100 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
                             Деятельность в роли Наставника ОПОП
                         </h2>
                         
@@ -169,7 +169,7 @@
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
                                             @click="nastAnswers[idx] = score"
-                                            :class="[nastAnswers[idx] === score ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-250']"
+                                            :class="[nastAnswers[idx] === score ? 'btn-active' : 'btn-inactive']"
                                             class="w-12 h-10 rounded-lg text-center font-bold text-sm transition-all focus:outline-none">
                                         {{ score }}
                                     </button>
@@ -181,7 +181,7 @@
                     <!-- БЛОК Б: АДМИНИСТРАТОР -->
                     <div class="border-t border-gray-200/50 pt-8">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
-                            <span class="bg-gray-100 dark:bg-gray-800 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
+                            <span class="bg-gray-100 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
                             Деятельность в роли Администратора ОПОП
                         </h2>
                         
@@ -192,7 +192,7 @@
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
                                             @click="adminAnswers[idx] = score"
-                                            :class="[adminAnswers[idx] === score ? 'bg-black dark:bg-white text-white dark:text-black' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-250']"
+                                            :class="[adminAnswers[idx] === score ? 'btn-active' : 'btn-inactive']"
                                             class="w-12 h-10 rounded-lg text-center font-bold text-sm transition-all focus:outline-none">
                                         {{ score }}
                                     </button>

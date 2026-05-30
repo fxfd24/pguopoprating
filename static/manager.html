@@ -7,9 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
     <script src="/assets/js/shared.js"></script>
 </head>
-<body class="py-8 px-4 text-gray-800">
+<body class="py-8 px-4">
 
     <div class="glass-blob blob-light-1"></div>
     <div class="glass-blob blob-light-2"></div>
@@ -26,7 +27,6 @@
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
-                <!-- Зафиксировали цвет: всегда серый фон и темная иконка -->
                 <div class="w-14 h-14 bg-gray-100 text-gray-700 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
@@ -41,9 +41,10 @@
                                @keyup.enter="verifyPassword"
                                :placeholder="t.passwordPlaceholder" 
                                :class="{'secure-input': !showPassword}"
-                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
+                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
                         
-                        <button @click="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                        <!-- Заблокировали вызов клавиатуры через @click.stop.prevent -->
+                        <button @click.stop.prevent="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
                             <i v-if="showPassword" class="fa-solid fa-eye-slash"></i>
                             <i v-else class="fa-solid fa-eye"></i>
                         </button>
@@ -69,28 +70,28 @@
         </div>
 
         <!-- ================= ГЛАВНЫЙ ИНТЕРФЕЙС УПРАВЛЕНИЯ K_СРОКИ ================= -->
-        <div v-else class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl">
+        <div v-else class="glass-card p-6 sm:p-8 shadow-xl">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between border-b border-gray-200/50 pb-6 mb-6">
                 <div>
-                    <h1 class="text-2xl font-extrabold mb-1" style="color: var(--text-main)">Выставление критерия K_сроки</h1>
-                    <p class="text-sm" style="color: var(--text-secondary)">Укажите оценки своевременности (от 2 до 5) для руководителей ОПОП.</p>
+                    <h1 class="text-2xl font-extrabold mb-1 text-main">Выставление критерия K_сроки</h1>
+                    <p class="text-sm text-secondary">Укажите оценки своевременности (от 2 до 5) для руководителей ОПОП.</p>
                 </div>
                 
-                <!-- Поиск в таблице (лупа не перекрывает текст) -->
+                <!-- Поиск в таблице -->
                 <div class="mt-4 md:mt-0 relative w-full md:w-80">
                     <input type="text" 
                            v-model="searchQuery" 
                            placeholder="Поиск по коду, ОПОП или ФИО..." 
-                           class="w-full pl-4 pr-12 py-2.5 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                           class="w-full pl-4 pr-12 py-2.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-3 text-gray-400"></i>
                 </div>
             </div>
 
-            <!-- Таблица направлений -->
-            <div class="overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/30">
+            <!-- А. ДЕСКТОПНАЯ ВЕРСИЯ (Таблица, скрыта на телефонах) -->
+            <div class="hidden md:block overflow-x-auto rounded-2xl border border-gray-100 dark:border-gray-800 bg-white/30">
                 <table class="w-full text-left text-sm border-collapse">
                     <thead>
-                        <tr class="bg-gray-50/50 dark:bg-black/10 border-b border-gray-100 dark:border-gray-800 font-bold" style="color: var(--text-main)">
+                        <tr class="bg-gray-50/50 dark:bg-black/10 border-b border-gray-100 dark:border-gray-800 font-bold text-main">
                             <th class="p-4 w-28">Код ОПОП</th>
                             <th class="p-4">Название программы / Профиль</th>
                             <th class="p-4 w-48">Руководитель</th>
@@ -99,40 +100,65 @@
                     </thead>
                     <tbody>
                         <tr v-for="spec in filteredSpecialties" :key="spec.id" class="border-b border-gray-100/50 dark:border-gray-800/50 hover:bg-white/40 transition-colors">
-                            <td class="p-4 font-bold" style="color: var(--text-main)">{{ spec.code }}</td>
+                            <td class="p-4 font-bold text-main">{{ spec.code }}</td>
                             <td class="p-4">
-                                <div class="font-bold" style="color: var(--text-main)">{{ spec.spec_name }}</div>
-                                <div class="text-xs mt-0.5" style="color: var(--text-secondary)" v-if="spec.profile !== '-'">Профиль: {{ spec.profile }}</div>
-                                <div class="text-xs" style="color: var(--text-secondary)">Институт: {{ spec.institute }}</div>
+                                <div class="font-bold text-main">{{ spec.spec_name }}</div>
+                                <div class="text-xs mt-0.5 text-secondary" v-if="spec.profile !== '-'">Профиль: {{ spec.profile }}</div>
+                                <div class="text-xs text-secondary">Институт: {{ spec.institute }}</div>
                             </td>
-                            <td class="p-4 font-semibold text-gray-700 dark:text-gray-300">{{ spec.supervisor_name }}</td>
+                            <td class="p-4 font-semibold text-secondary">{{ spec.supervisor_name }}</td>
                             <td class="p-4">
                                 <div class="flex items-center justify-center space-x-1.5">
                                     <button v-for="score in [2, 3, 4, 5]" 
                                             :key="score"
-                                            @click="saveKSroki(spec.id, score)"
-                                            :class="[
-                                                getKSrokiValue(spec.id) === score 
-                                                ? 'bg-black dark:bg-white text-white dark:text-black shadow-sm' 
-                                                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-100'
-                                            ]"
+                                            @click="setKSrokiLocal(spec.id, score)"
+                                            :class="[getKSrokiValue(spec.id) === score ? 'btn-active' : 'btn-inactive']"
                                             class="w-9 h-9 rounded-lg font-bold text-xs transition-all focus:outline-none flex items-center justify-center">
                                         {{ score }}
                                     </button>
-                                    
-                                    <div class="w-5 flex justify-center">
-                                        <transition name="fade">
-                                            <i v-if="savedStatus[spec.id]" class="fa-solid fa-circle-check text-green-500 text-sm"></i>
-                                        </transition>
-                                    </div>
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="filteredSpecialties.length === 0">
-                            <td colspan="4" class="p-8 text-center text-gray-450">Направления не найдены</td>
-                        </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Б. МОБИЛЬНАЯ ВЕРСИЯ (Карточки, БЕЗ горизонтальной прокрутки, скрыта на ПК) -->
+            <div class="block md:hidden space-y-4">
+                <div v-for="spec in filteredSpecialties" :key="spec.id" class="glass-card p-5 border border-white/20">
+                    <div class="font-bold text-main text-sm">{{ spec.code }}</div>
+                    <div class="font-bold text-main text-sm mt-1">{{ spec.spec_name }}</div>
+                    <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">Профиль: {{ spec.profile }}</div>
+                    <div class="text-xs text-secondary">Институт: {{ spec.institute }}</div>
+                    <div class="text-xs text-muted mt-2">Руководитель: <span class="font-semibold text-secondary">{{ spec.supervisor_name }}</span></div>
+                    
+                    <div class="flex items-center justify-between mt-4 pt-4 border-t border-gray-100/20">
+                        <span class="text-xs font-bold text-main">K_сроки (2-5):</span>
+                        <div class="flex space-x-1.5">
+                            <button v-for="score in [2, 3, 4, 5]" 
+                                    :key="score"
+                                    @click="setKSrokiLocal(spec.id, score)"
+                                    :class="[getKSrokiValue(spec.id) === score ? 'btn-active' : 'btn-inactive']"
+                                    class="w-8 h-8 rounded-lg font-bold text-xs flex items-center justify-center">
+                                {{ score }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Общая кнопка сохранения для всех измененных K_сроки -->
+            <div class="mt-8 border-t border-gray-200/20 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-secondary font-semibold">
+                    <span v-if="hasChanges" class="text-yellow-600 dark:text-yellow-400">⚠️ У вас есть несохраненные оценки</span>
+                    <span v-else class="text-green-600 dark:text-green-400">✅ Все оценки успешно записаны</span>
+                </div>
+                <button @click="saveAllManagerData"
+                        :disabled="!hasChanges || saveLoading"
+                        class="w-full sm:w-auto bg-black dark:bg-white hover:bg-gray-900 dark:hover:bg-gray-100 disabled:bg-gray-300 disabled:cursor-not-allowed text-white dark:text-black px-8 py-3.5 rounded-xl font-bold shadow-md transition-all flex items-center justify-center space-x-2">
+                    <span v-if="saveLoading"><i class="fa-solid fa-spinner animate-spin"></i> {{ t.loading }}</span>
+                    <span v-else><i class="fa-solid fa-floppy-disk mr-2"></i>Сохранить все изменения</span>
+                </button>
             </div>
 
         </div>

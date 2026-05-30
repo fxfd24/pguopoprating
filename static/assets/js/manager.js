@@ -7,13 +7,16 @@ createApp({
 
         const authenticated = ref(false);
         const passwordInput = ref('');
-        const showPassword = ref(false); // Состояние глазика
+        const showPassword = ref(false); 
         const authLoading = ref(false);
         const authError = ref('');
 
         const specialties = ref([]);
         const searchQuery = ref('');
-        const savedStatus = ref({}); 
+        
+        // Локальное хранилище изменений перед сохранением
+        const localChanges = ref({}); // { spec_id: value }
+        const saveLoading = ref(false);
 
         const loadManagerData = async () => {
             try {
@@ -26,7 +29,7 @@ createApp({
         };
 
         const verifyPassword = async () => {
-            const trimmedPass = passwordInput.value.trim(); // Авто-трим
+            const trimmedPass = passwordInput.value.trim();
             if (!trimmedPass) return;
             authLoading.value = true;
             authError.value = '';
@@ -64,42 +67,55 @@ createApp({
             );
         });
 
+        // Получить текущее значение (учитывая локальные несохраненные изменения)
         const getKSrokiValue = (specId) => {
+            if (localChanges.value[specId] !== undefined) {
+                return localChanges.value[specId];
+            }
             const spec = specialties.value.find(s => s.id === specId);
             return spec ? spec.k_sroki : 0;
         };
 
-        const saveKSroki = async (specId, value) => {
+        // Запись изменений локально без отправки на сервер
+        const setKSrokiLocal = (specId, value) => {
+            localChanges.value[specId] = value;
+        };
+
+        // Есть ли несохраненные изменения
+        const hasChanges = computed(() => {
+            return Object.keys(localChanges.value).length > 0;
+        });
+
+        // Сохранить все накопленные изменения одним кликом на сервер
+        const saveAllManagerData = async () => {
+            if (!hasChanges.value) return;
+            saveLoading.value = true;
             try {
-                const response = await fetch('/api/vote/admin', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Password': sessionStorage.getItem('manager_password')
-                    },
-                    body: JSON.stringify({
-                        specialty_id: specId,
-                        k_sroki: value
-                    })
-                });
-
-                if (response.status === 401) {
-                    alert("Ошибка авторизации. Обновите страницу.");
-                    return;
+                // Отправляем все локальные изменения по очереди
+                for (const [specId, value] of Object.entries(localChanges.value)) {
+                    await fetch('/api/vote/admin', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Password': sessionStorage.getItem('manager_password')
+                        },
+                        body: JSON.stringify({
+                            specialty_id: parseInt(specId),
+                            k_sroki: value
+                        })
+                    });
                 }
-
-                const res = await response.json();
-                if (res.status === 'success') {
-                    const spec = specialties.value.find(s => s.id === specId);
-                    if (spec) spec.k_sroki = value;
-                    savedStatus.value[specId] = true;
-                    setTimeout(() => {
-                        savedStatus.value[specId] = false;
-                    }, 1500);
-                }
+                
+                // Перезагружаем свежие данные с бэкенда
+                await loadManagerData();
+                // Очищаем локальный буфер изменений
+                localChanges.value = {};
+                alert("Все изменения K_сроки успешно сохранены на сервере!");
             } catch (err) {
-                console.error("Ошибка сохранения k_sroki:", err);
-                alert("Ошибка сохранения оценки на сервере");
+                console.error("Ошибка пакетного сохранения:", err);
+                alert("Произошла ошибка при сохранении данных.");
+            } finally {
+                saveLoading.value = false;
             }
         };
 
@@ -122,8 +138,10 @@ createApp({
             searchQuery,
             filteredSpecialties,
             getKSrokiValue,
-            saveKSroki,
-            savedStatus
+            setKSrokiLocal,
+            hasChanges,
+            saveAllManagerData,
+            saveLoading
         };
     }
 }).mount('#app');
