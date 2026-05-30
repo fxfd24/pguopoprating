@@ -72,13 +72,14 @@
 
             <!-- Шаг 1: Выбор направления -->
             <div class="mb-8">
-                <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">{{ t.selectSpecialtyLabel }}</label>
+                <label class="block text-sm font-bold mb-2 text-main">{{ t.selectSpecialtyLabel }}</label>
                 <div class="relative">
+                    <!-- Заменили px-4 на pl-4 pr-12 для предотвращения наложения текста на иконку лупы -->
                     <input type="text" 
                            v-model="searchQuery" 
                            @focus="showDropdown = true"
                            :placeholder="t.selectPlaceholder" 
-                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                           class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
                     
                     <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl max-h-60 overflow-y-auto">
@@ -86,7 +87,7 @@
                              :key="spec.id" 
                              @click="selectSpecialty(spec)"
                              class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
-                            <div class="font-bold text-gray-950 dark:text-gray-100">{{ spec.code }} {{ spec.name }}</div>
+                            <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                         </div>
                     </div>
                 </div>

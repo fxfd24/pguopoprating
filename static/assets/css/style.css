@@ -9,7 +9,7 @@
     --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.04);
     --card-glow: rgba(255, 255, 255, 0.7);
     --input-bg: #ffffff;
-    --info-bg: rgba(0, 0, 0, 0.03); /* Мягкая темноватая подложка для светлой темы */
+    --info-bg: rgba(0, 0, 0, 0.03);
 }
 
 .dark {
@@ -22,15 +22,10 @@
     --card-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.75);
     --card-glow: rgba(255, 255, 255, 0.08);
     --input-bg: #111827;
-    --info-bg: rgba(255, 255, 255, 0.04); /* Мягкая светлая подложка для темной темы */
+    --info-bg: rgba(255, 255, 255, 0.04);
 }
 
-/* Глобальные сбросы и фикс мобильной прокрутки */
-html, body {
-    overflow-x: hidden !important;
-    max-width: 100vw;
-}
-
+/* Глобальный сброс синей мобильной рамки */
 * {
     -webkit-tap-highlight-color: transparent !important;
     outline: none !important;
@@ -45,26 +40,32 @@ body {
     transition: background-color 0.4s ease, color 0.3s ease;
 }
 
-/* Контрастное отображение текстов в выпадающих списках и инпутах */
-input, select, option, textarea {
+/* Выпадающие списки ВСЕГДА белые с черным текстом по вашей просьбе */
+select, option {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Инпуты ввода (текст контрастен теме) */
+input, textarea {
     background-color: var(--input-bg) !important;
     color: var(--text-main) !important;
     border: 1px solid var(--card-border) !important;
 }
 
-/* Подложка карточки выбранного направления и других блоков информации */
 .info-block {
     background-color: var(--info-bg) !important;
     border: 1px solid var(--card-border) !important;
     color: var(--text-main) !important;
 }
 
-/* ---- СЕМАНТИЧЕСКИЕ КЛАССЫ ЦВЕТОВ (ДЛЯ ОБХОДА ТАЙЛВИНДА В ТЕМНОЙ ТЕМЕ) ---- */
+/* Строгие семантические классы контрастности */
 .text-main { color: var(--text-main) !important; }
 .text-secondary { color: var(--text-secondary) !important; }
 .text-muted { color: var(--text-muted) !important; }
 
-/* ---- НАСТОЯЩЕЕ ВЫСОКОПРОИЗВОДИТЕЛЬНОЕ СТЕКЛО ---- */
+/* ---- ТЕХНОЛОГИЯ LIQUID GLASS ---- */
 .glass-card {
     background: var(--card-bg);
     backdrop-filter: blur(20px) saturate(180%);
@@ -96,7 +97,6 @@ input, select, option, textarea {
         0 25px 50px -10px rgba(0, 0, 0, 0.6);
 }
 
-/* Сферы видны только на ПК */
 .glass-blob {
     display: none;
     position: absolute;
@@ -143,7 +143,7 @@ input, select, option, textarea {
     background: rgba(0, 0, 0, 0.5);
 }
 
-/* ---- СТРОГОЕ УБИРАНИЕ НЕВЕРНОГО СВОЙСТВА ---- */
+/* Обход сохранения паролей */
 .secure-input {
     -webkit-text-security: disc !important;
 }

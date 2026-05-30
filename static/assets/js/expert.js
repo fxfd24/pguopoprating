@@ -7,6 +7,7 @@ createApp({
 
         const authenticated = ref(false);
         const passwordInput = ref('');
+        const showPassword = ref(false); // Для переключения видимости пароля
         const authLoading = ref(false);
         const authError = ref('');
 
@@ -73,7 +74,8 @@ createApp({
         });
 
         const verifyPassword = async () => {
-            if (!passwordInput.value) return;
+            const trimmedPass = passwordInput.value.trim(); // Автоматически убираем лишние пробелы и переносы строк
+            if (!trimmedPass) return;
             authLoading.value = true;
             authError.value = '';
             try {
@@ -82,13 +84,12 @@ createApp({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         role: 'expert',
-                        password: passwordInput.value
+                        password: trimmedPass
                     })
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Сохраняем пароль в сессии для отправки в заголовках
-                    sessionStorage.setItem('expert_password', passwordInput.value);
+                    sessionStorage.setItem('expert_password', trimmedPass);
                     authenticated.value = true;
                     await loadInitialData();
                 } else {
@@ -142,7 +143,7 @@ createApp({
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
-                        'X-Password': sessionStorage.getItem('expert_password') // Отправляем пароль для проверки на сервере
+                        'X-Password': sessionStorage.getItem('expert_password')
                     },
                     body: JSON.stringify({
                         specialty_id: selectedSpec.value.id,
@@ -185,6 +186,10 @@ createApp({
             submitted.value = false;
         };
 
+        onMounted(() => {
+            applyThemeClasses();
+        });
+
         return {
             currentLang,
             theme,
@@ -193,6 +198,7 @@ createApp({
             t,
             authenticated,
             passwordInput,
+            showPassword,
             authLoading,
             authError,
             verifyPassword,

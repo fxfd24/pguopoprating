@@ -7,6 +7,7 @@ createApp({
 
         const authenticated = ref(false);
         const passwordInput = ref('');
+        const showPassword = ref(false); // Состояние глазика
         const authLoading = ref(false);
         const authError = ref('');
 
@@ -25,7 +26,8 @@ createApp({
         };
 
         const verifyPassword = async () => {
-            if (!passwordInput.value) return;
+            const trimmedPass = passwordInput.value.trim(); // Авто-трим
+            if (!trimmedPass) return;
             authLoading.value = true;
             authError.value = '';
             try {
@@ -34,12 +36,12 @@ createApp({
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         role: 'manager',
-                        password: passwordInput.value
+                        password: trimmedPass
                     })
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    sessionStorage.setItem('manager_password', passwordInput.value);
+                    sessionStorage.setItem('manager_password', trimmedPass);
                     authenticated.value = true;
                     await loadManagerData();
                 } else {
@@ -113,6 +115,7 @@ createApp({
             t,
             authenticated,
             passwordInput,
+            showPassword,
             authLoading,
             authError,
             verifyPassword,

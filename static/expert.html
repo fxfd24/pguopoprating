@@ -25,20 +25,30 @@
 
         <!-- ================= МОДАЛЬНОЕ ОКНО АВТОРИЗАЦИИ ================= -->
         <div v-if="!authenticated" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
-            <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative">
-                <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
+            <div class="glass-card w-full max-w-md p-8 text-center shadow-2xl relative animate-entrance">
+                <div class="w-14 h-14 bg-gray-100 dark:bg-gray-800 text-main rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-sm">
                     <i class="fa-solid fa-lock text-xl"></i>
                 </div>
-                <h2 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.accessDenied }}</h2>
-                <p class="text-sm mb-6" style="color: var(--text-secondary)">{{ t.enterPassword }}</p>
+                <!-- Заменили стили на жесткие классы text-main и text-secondary -->
+                <h2 class="text-xl font-bold mb-2 text-main">{{ t.accessDenied }}</h2>
+                <p class="text-sm mb-6 text-secondary">{{ t.enterPassword }}</p>
                 
                 <div class="space-y-4">
-                    <!-- Заменили type="password" на type="text" + secure-input, чтобы браузер не предлагал сохранение -->
-                    <input type="text" 
-                           v-model="passwordInput" 
-                           @keyup.enter="verifyPassword"
-                           :placeholder="t.passwordPlaceholder" 
-                           class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold secure-input">
+                    <!-- Контейнер пароля с глазиком -->
+                    <div class="relative">
+                        <input type="text" 
+                               v-model="passwordInput" 
+                               @keyup.enter="verifyPassword"
+                               :placeholder="t.passwordPlaceholder" 
+                               :class="{'secure-input': !showPassword}"
+                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm text-center font-semibold transition-all">
+                        
+                        <!-- Кнопка-глазик -->
+                        <button @click="showPassword = !showPassword" class="absolute right-4 top-3 text-gray-400 hover:text-black dark:hover:text-white focus:outline-none">
+                            <i v-if="showPassword" class="fa-solid fa-eye-slash"></i>
+                            <i v-else class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
                     
                     <button @click="verifyPassword"
                             :disabled="authLoading"
@@ -67,22 +77,22 @@
                 <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
                     <i class="fa-solid fa-check text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-bold mb-2" style="color: var(--text-main)">Оценка успешно сохранена!</h2>
-                <p class="mb-6" style="color: var(--text-secondary)">Ваши оценки руководителю программы приняты бэкендом системы.</p>
+                <h2 class="text-2xl font-bold mb-2 text-main">Оценка успешно сохранена!</h2>
+                <p class="mb-6 text-secondary">Ваши оценки руководителю программы приняты бэкендом системы.</p>
                 <button @click="resetForm" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-md transition-all">Оценить еще одного руководителя</button>
             </div>
 
             <!-- Форма заполнения -->
             <div v-else class="glass-card rounded-3xl p-6 sm:p-8 shadow-xl">
                 <div class="border-b border-gray-200/50 pb-6 mb-6">
-                    <h1 class="text-2xl font-extrabold mb-2" style="color: var(--text-main)">Оценка руководителя ОПОП экспертом</h1>
-                    <p class="text-sm" style="color: var(--text-secondary)">Заполните блоки вопросов для ролей «Наставник» и «Администратор» по выбранному направлению.</p>
+                    <h1 class="text-2xl font-extrabold mb-2 text-main">Оценка руководителя ОПОП экспертом</h1>
+                    <p class="text-sm text-secondary">Заполните блоки вопросов для ролей «Наставник» и «Администратор» по выбранному направлению.</p>
                 </div>
 
                 <!-- Шаг 1: Кто оценивает -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     <div>
-                        <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">1. Ваша роль</label>
+                        <label class="block text-sm font-bold mb-2 text-main">1. Ваша роль</label>
                         <div class="grid grid-cols-2 gap-3">
                             <button @click="setRole('dean')" 
                                     :class="[roleType === 'dean' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900']"
@@ -98,7 +108,7 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">2. Ваше имя (выберите из списка)</label>
+                        <label class="block text-sm font-bold mb-2 text-main">2. Ваше имя (выберите из списка)</label>
                         <select v-model="selectedEvaluator" 
                                 class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                             <option value="" disabled>-- Выберите ФИО --</option>
@@ -109,33 +119,34 @@
 
                 <!-- Шаг 2: Какое направление оцениваем -->
                 <div class="mb-8" v-if="selectedEvaluator">
-                    <label class="block text-sm font-bold mb-2" style="color: var(--text-main)">3. Направление подготовки (поиск по коду/названию)</label>
+                    <label class="block text-sm font-bold mb-2 text-main">3. Направление подготовки (поиск по коду/названию)</label>
                     <div class="relative">
                         <input type="text" 
                                v-model="searchQuery" 
                                @focus="showDropdown = true"
                                placeholder="Введите код или название ОПОП..." 
-                               class="w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
-                        
+                               class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                        <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
+
                         <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl max-h-48 overflow-y-auto">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
                                  @click="selectSpecialty(spec)"
                                  class="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer text-sm border-b border-gray-50 dark:border-gray-900 last:border-none">
-                                <div class="font-bold text-gray-950 dark:text-gray-100">{{ spec.code }} {{ spec.name }}</div>
+                                <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Карточка выбранной специальности -->
-                    <div v-if="selectedSpec" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl flex items-center justify-between animate-fade-in">
+                    <div v-if="selectedSpec" class="mt-4 p-4 info-block rounded-2xl flex items-center justify-between">
                         <div>
-                            <div class="font-bold text-sm" style="color: var(--text-main)">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
-                            <div class="text-xs mt-1" style="color: var(--text-secondary)">Институт: {{ selectedSpec.institute }}</div>
+                            <div class="font-bold text-sm text-main">{{ selectedSpec.code }} - {{ selectedSpec.name }}</div>
+                            <div class="text-xs text-secondary mt-1">Институт: {{ selectedSpec.institute }}</div>
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-400 uppercase">Оцениваемый руководитель</div>
-                            <div class="font-bold text-black dark:text-white">{{ selectedSpec.supervisor_name }}</div>
+                            <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
                         </div>
                     </div>
                 </div>
@@ -145,14 +156,14 @@
                     
                     <!-- БЛОК А: НАСТАВНИК -->
                     <div class="border-t border-gray-200/50 pt-6">
-                        <h2 class="text-lg font-bold mb-4 inline-flex items-center" style="color: var(--text-main)">
-                            <span class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
+                        <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
+                            <span class="bg-gray-100 dark:bg-gray-800 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
                             Деятельность в роли Наставника ОПОП
                         </h2>
                         
                         <div class="space-y-6">
                             <div v-for="(q, idx) in currentQuestions.nast" :key="idx" class="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-white dark:border-gray-800">
-                                <p class="font-bold text-sm mb-4" style="color: var(--text-main)">{{ q }}</p>
+                                <p class="font-bold text-sm mb-4 text-main">{{ q }}</p>
                                 <div class="flex space-x-2">
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
@@ -168,14 +179,14 @@
 
                     <!-- БЛОК Б: АДМИНИСТРАТОР -->
                     <div class="border-t border-gray-200/50 pt-8">
-                        <h2 class="text-lg font-bold mb-4 inline-flex items-center" style="color: var(--text-main)">
-                            <span class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
+                        <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
+                            <span class="bg-gray-100 dark:bg-gray-800 text-main px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
                             Деятельность в роли Администратора ОПОП
                         </h2>
                         
                         <div class="space-y-6">
                             <div v-for="(q, idx) in currentQuestions.admin" :key="idx" class="bg-white/40 dark:bg-black/10 p-5 rounded-2xl border border-white dark:border-gray-800">
-                                <p class="font-bold text-sm mb-4" style="color: var(--text-main)">{{ q }}</p>
+                                <p class="font-bold text-sm mb-4 text-main">{{ q }}</p>
                                 <div class="flex space-x-2">
                                     <button v-for="score in [2,3,4,5]" 
                                             :key="score"
