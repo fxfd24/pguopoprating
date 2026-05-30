@@ -484,20 +484,41 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
     total_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean'").fetchone()[0]
     total_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod'").fetchone()[0]
 
-    # 2. Статистика ЗА СЕГОДНЯ (+ голоса)
     today_students = db.execute("SELECT COUNT(*) FROM student_votes WHERE date(timestamp) = date('now', 'localtime')").fetchone()[0]
     today_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean' AND date(timestamp) = date('now', 'localtime')").fetchone()[0]
     today_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod' AND date(timestamp) = date('now', 'localtime')").fetchone()[0]
 
-    # 3. Статистика ЗА ВЧЕРА (для расчета тренда)
-    yesterday_students = db.execute("SELECT COUNT(*) FROM student_votes WHERE date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
-    yesterday_deans = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='dean' AND date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
-    yesterday_hods = db.execute("SELECT COUNT(*) FROM expert_votes WHERE role_type='hod' AND date(timestamp) = date('now', '-1 day', 'localtime')").fetchone()[0]
+    # Вспомогательная функция для расчета нарастающего итога по часовым интервалам суток
+    def get_cumulative_trend(table_name, date_sql, extra_filter=""):
+        intervals = [
+            ("00:00:00", "12:00:00"),
+            ("12:00:01", "15:00:00"),
+            ("15:00:01", "18:00:00"),
+            ("18:00:01", "23:59:59")
+        ]
+        cumulative = []
+        total = 0
+        for start, end in intervals:
+            q = f"""
+                SELECT COUNT(*) FROM {table_name}
+                WHERE date(timestamp) = {date_sql}
+                AND time(timestamp) >= '{start}' AND time(timestamp) <= '{end}'
+                {extra_filter}
+            """
+            count = db.execute(q).fetchone()[0]
+            total += count
+            cumulative.append(total)
+        return cumulative
 
-    # Расчет линейного прогноза на завтра: Прогноз = Сегодня + (Сегодня - Вчера)
-    proj_students = max(0, today_students + (today_students - yesterday_students))
-    proj_deans = max(0, today_deans + (today_deans - yesterday_deans))
-    proj_hods = max(0, today_hods + (today_hods - yesterday_hods))
+    # Расчет кумулятивных кривых (4 точки нарастающим итогом за сутки)
+    students_yesterday_curve = get_cumulative_trend("student_votes", "date('now', '-1 day', 'localtime')")
+    students_today_curve = get_cumulative_trend("student_votes", "date('now', 'localtime')")
+
+    deans_yesterday_curve = get_cumulative_trend("expert_votes", "date('now', '-1 day', 'localtime')", "AND role_type='dean'")
+    deans_today_curve = get_cumulative_trend("expert_votes", "date('now', 'localtime')", "AND role_type='dean'")
+
+    hods_yesterday_curve = get_cumulative_trend("expert_votes", "date('now', '-1 day', 'localtime')", "AND role_type='hod'")
+    hods_today_curve = get_cumulative_trend("expert_votes", "date('now', 'localtime')", "AND role_type='hod'")
 
     # 4. Лидеры-институты по количеству пришедших голосов за сегодня
     inst_today_query = """
@@ -514,15 +535,18 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
         "stats": {
             "students_voted": total_students,
             "students_today": today_students,
-            "students_trend": [yesterday_students, today_students, proj_students],
+            "students_yesterday_curve": students_yesterday_curve,
+            "students_today_curve": students_today_curve,
 
             "deans_voted": total_deans,
             "deans_today": today_deans,
-            "deans_trend": [yesterday_deans, today_deans, proj_deans],
+            "deans_yesterday_curve": deans_yesterday_curve,
+            "deans_today_curve": deans_today_curve,
 
             "hods_voted": total_hods,
             "hods_today": today_hods,
-            "hods_trend": [yesterday_hods, today_hods, proj_hods],
+            "hods_yesterday_curve": hods_yesterday_curve,
+            "hods_today_curve": hods_today_curve,
         },
         "inst_today": inst_today,
         "ratings": ratings

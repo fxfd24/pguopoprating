@@ -12,42 +12,50 @@ createApp({
         const authError = ref('');
 
         const stats = ref({ students_voted: 0, deans_voted: 0, hods_voted: 0 });
-        const instToday = ref([]); // Активность институтов за сегодня
+        const instToday = ref([]); 
         const ratings = ref([]);
         const searchQuery = ref('');
         const selectedInstitute = ref('');
 
-        // Функция построения микро-графиков трендов
-        const renderMiniChart = (canvasId, dataTrend) => {
+        // Стейты для раскрытия списков
+        const showAllLeaders = ref(false);
+        const showAllInstitutes = ref(false);
+
+        // Построение красивых накладывающихся графиков (Вчера vs Сегодня)
+        const renderMiniChart = (canvasId, yesterdayCurve, todayCurve) => {
             const ctx = document.getElementById(canvasId);
             if (!ctx) return;
             
-            // Настройки цветов линии под темную и светлую тему
             const isDark = document.documentElement.classList.contains('dark');
-            const lineColor = isDark ? '#6366f1' : '#4f46e5';
+            
+            // Цвета линий: Сегодня - яркая сплошная, Вчера - тусклая полупрозрачная
+            const todayColor = isDark ? '#ffffff' : '#000000';
+            const yesterdayColor = isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: ['Вчера', 'Сегодня', 'Прогноз'],
+                    labels: ['12:00', '15:00', '18:00', '24:00'],
                     datasets: [
                         {
-                            data: [dataTrend[0], dataTrend[1], dataTrend[1]], // Фактическая линия
-                            borderColor: lineColor,
+                            label: 'Вчера',
+                            data: yesterdayCurve,
+                            borderColor: yesterdayColor,
                             borderWidth: 2,
                             fill: false,
                             tension: 0.3,
-                            pointRadius: 0
+                            pointRadius: 2,
+                            pointBackgroundColor: yesterdayColor
                         },
                         {
-                            data: [null, dataTrend[1], dataTrend[2]], // Пунктирная линия прогнозирования
-                            borderColor: lineColor,
-                            borderWidth: 2,
-                            borderDash: [4, 4],
+                            label: 'Сегодня',
+                            data: todayCurve,
+                            borderColor: todayColor,
+                            borderWidth: 2.5,
                             fill: false,
                             tension: 0.3,
                             pointRadius: 3,
-                            pointBackgroundColor: lineColor
+                            pointBackgroundColor: todayColor
                         }
                     ]
                 },
@@ -73,9 +81,9 @@ createApp({
 
                 // Строим микро-графики
                 setTimeout(() => {
-                    renderMiniChart('chart-students', data.stats.students_trend);
-                    renderMiniChart('chart-deans', data.stats.deans_trend);
-                    renderMiniChart('chart-hods', data.stats.hods_trend);
+                    renderMiniChart('chart-students', data.stats.students_yesterday_curve, data.stats.students_today_curve);
+                    renderMiniChart('chart-deans', data.stats.deans_yesterday_curve, data.stats.deans_today_curve);
+                    renderMiniChart('chart-hods', data.stats.hods_yesterday_curve, data.stats.hods_today_curve);
                 }, 100);
 
             } catch (err) {
@@ -112,11 +120,15 @@ createApp({
             }
         };
 
-        // Топ-3 лидера-руководителя по коэффициенту R_A
-        const topLeaders = computed(() => {
-            return [...ratings.value]
-                .sort((a, b) => b.r_a - a.r_a)
-                .slice(0, 3);
+        // Реактивный расчет списка лидеров (показывает 3 или всех)
+        const visibleLeaders = computed(() => {
+            const sorted = [...ratings.value].sort((a, b) => b.r_a - a.r_a);
+            return showAllLeaders.value ? sorted : sorted.slice(0, 3);
+        });
+
+        // Реактивный расчет списка институтов за сегодня (показывает 3 или всех)
+        const visibleInstitutes = computed(() => {
+            return showAllInstitutes.value ? instToday.value : instToday.value.slice(0, 3);
         });
 
         const uniqueInstitutes = computed(() => {
@@ -169,6 +181,10 @@ createApp({
             }
         };
 
+        onMounted(() => {
+            applyThemeClasses();
+        });
+
         return {
             currentLang,
             theme,
@@ -181,7 +197,10 @@ createApp({
             verifyPassword,
             stats,
             instToday,
-            topLeaders,
+            showAllLeaders,
+            showAllInstitutes,
+            visibleLeaders,
+            visibleInstitutes,
             searchQuery,
             selectedInstitute,
             uniqueInstitutes,
