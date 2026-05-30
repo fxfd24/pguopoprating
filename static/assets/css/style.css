@@ -47,6 +47,12 @@ select, option {
     border: 1px solid rgba(0, 0, 0, 0.15) !important;
 }
 
+.dark select, .dark option {
+    background-color: #ffffff !important; /* Белый фон */
+    color: #000000 !important;             /* Контрастный черный текст */
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+}
+
 /* Инпуты ввода (текст контрастен теме) */
 input, textarea {
     background-color: var(--input-bg) !important;
