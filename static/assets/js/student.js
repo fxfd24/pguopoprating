@@ -334,6 +334,13 @@ createApp({
             }
         };
 
+        const resetForm = () => {
+            selectedSpec.value = null;
+            searchQuery.value = '';
+            answers.value = { q1: null, q2: null, q3: null, q4: null, q5: null };
+            submitted.value = false;
+        };
+        
         return {
             currentLang,
             theme,
@@ -351,7 +358,8 @@ createApp({
             isFormValid,
             loading,
             submitted,
-            submitVote
+            submitVote,
+            resetForm
         };
     }
 }).mount('#app');

@@ -13,7 +13,7 @@ const supervisorTranslations = {
     "Минец К.Г.": "Minets K.G.",
     "Таран О.Л.": "Taran O.L.",
     "Фалеева А.Ю.": "Faleeva A.Y.",
-    "Боднева Н.А.": "Bodneva N.A.",
+    "Боднева Н.А.": "Bodneyeva N.A.",
     "Дмитриенко Б.Ч.": "Dmitrienko B.C.",
     "Голубич С.А": "Golubich S.A.",
     "Рубец Е.А.": "Rubets E.A.",
@@ -100,7 +100,6 @@ const supervisorTranslations = {
     "Еремкина Н.В.": "Eremkina N.V."
 };
 
-// Функция автоматического перевода ФИО руководителя
 window.translateSupervisor = (name, lang) => {
     if (lang === 'ru') return name;
     return supervisorTranslations[name] || name;
@@ -142,7 +141,10 @@ window.globalTranslations = {
         accessDenied: "Доступ ограничен",
         enterPassword: "Пожалуйста, введите пароль доступа для продолжения.",
         passwordPlaceholder: "Введите пароль...",
-        loginBtn: "Войти в панель"
+        loginBtn: "Войти в панель",
+        
+        // Кнопка рестарта опроса для студентов (Добавлена!)
+        retakeBtn: "Пройти еще раз"
     },
     en: {
         headerTitle: "OPOP Assessment",
@@ -179,7 +181,10 @@ window.globalTranslations = {
         accessDenied: "Access Restricted",
         enterPassword: "Please enter the access password to continue.",
         passwordPlaceholder: "Enter password...",
-        loginBtn: "Log In"
+        loginBtn: "Log In",
+        
+        // Кнопка рестарта опроса для студентов (Добавлена!)
+        retakeBtn: "Take survey again"
     }
 };
 

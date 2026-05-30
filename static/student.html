@@ -40,9 +40,8 @@
             <span>{{ t.goHome }}</span>
         </a>
 
-        <!-- Успешная отправка (с красивой анимированной галочкой) -->
+        <!-- Успешная отправка -->
         <div v-if="submitted" class="glass-card rounded-3xl p-8 text-center shadow-xl border border-white/40 transform transition-all animate-entrance">
-            <!-- Анимированный SVG-значок -->
             <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg class="w-16 h-16" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
                     <circle class="checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
@@ -51,7 +50,11 @@
             </div>
             <h2 class="text-2xl font-bold mb-2 text-main">{{ t.submittedTitle }}</h2>
             <p class="mb-6 text-secondary">{{ t.submittedDesc }}</p>
-            <a href="/" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all inline-block">{{ t.goHomeBtn }}</a>
+            
+            <!-- ИСПРАВЛЕНО: Заменили переход на главную реактивной кнопкой сброса -->
+            <button @click="resetForm" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all focus:outline-none">
+                {{ t.retakeBtn }}
+            </button>
         </div>
 
         <!-- Форма анкетирования -->
