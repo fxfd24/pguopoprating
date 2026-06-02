@@ -131,13 +131,17 @@
                                class="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                         <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
 
-                        <!-- ИСПРАВЛЕНО: применили класс dropdown-menu и dropdown-item -->
+                        <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и руководителя направления -->
                         <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-y-auto dropdown-menu">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
                                  @click="selectSpecialty(spec)"
                                  class="px-4 py-3 cursor-pointer text-sm last:border-none dropdown-item">
                                 <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
+                                <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">{{ spec.profile }}</div>
+                                <div class="text-xs text-secondary mt-0.5">
+                                    Руководитель: <span class="font-bold text-main">{{ spec.supervisor_name }}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
