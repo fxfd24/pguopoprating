@@ -34,13 +34,14 @@ class ExpertVote(BaseModel):
     specialty_id: int
     evaluator_name: str
     role_type: str
-    nast_q1: int
-    nast_q2: int
-    nast_q3: int
-    nast_q4: int
-    admin_q1: int
-    admin_q2: int
-    admin_q3: int
+    # Оценки стали необязательными (Optional) для раздельной отправки
+    nast_q1: Optional[int] = None
+    nast_q2: Optional[int] = None
+    nast_q3: Optional[int] = None
+    nast_q4: Optional[int] = None
+    admin_q1: Optional[int] = None
+    admin_q2: Optional[int] = None
+    admin_q3: Optional[int] = None
 
 class AdminVote(BaseModel):
     specialty_id: int
@@ -77,10 +78,6 @@ def get_db():
 
 # ---- ИНИЦИАЛИЗАЦИЯ И НАПОЛНЕНИЕ БД ----
 def init_db():
-    if os.path.exists(DB_FILE):
-        return
-
-    print("Создание и наполнение базы данных...")
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
@@ -97,9 +94,18 @@ def init_db():
         name TEXT,
         profile TEXT,
         supervisor_id INTEGER,
+        mentor_id INTEGER, -- Поле наставника для ОПОП ВШУ с разделенными ролями
         institute TEXT,
-        FOREIGN KEY(supervisor_id) REFERENCES supervisors(id)
+        FOREIGN KEY(supervisor_id) REFERENCES supervisors(id),
+        FOREIGN KEY(mentor_id) REFERENCES supervisors(id)
     )""")
+
+    # МИГРАЦИЯ: Если БД существовала, но колонки mentor_id нет - добавляем её на лету
+    try:
+        cursor.execute("ALTER TABLE specialties ADD COLUMN mentor_id INTEGER REFERENCES supervisors(id)")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Колонка уже добавлена
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS deans (
@@ -149,7 +155,6 @@ def init_db():
     for h in hods_list:
         cursor.execute("INSERT OR IGNORE INTO hods (name) VALUES (?)", (h,))
 
-    # Наполнение Специальностей и Руководителей
     # Наполнение Специальностей и Руководителей (с автоматическим исключением дубликатов)
     raw_specialties = [
         ("10.02.05", "Обеспечение информационной безопасности автоматизированных систем", "-", "Воробьев Г.А.", "ИРГЯИГТ"),
@@ -160,7 +165,7 @@ def init_db():
         ("40.02.03", "Право и судебное администрирование", "-", "Фалеева А.Ю.", "ЮИ"),
         ("43.02.14", "Гостиничное дело", "-", "Боднева Н.А.", "ИИЯМТ"),
         ("54.01.20", "Графический дизайнер", "-", "Дмитриенко Б.Ч.", "ВШДиА"),
-        ("07.02.01", "Архитектура", "Архитектура", "Голубич С.А", "ВШДиА"),
+        ("07.02.01", "Архитектура", "Архитектурное проектирование", "Голубич С.А", "ВШДиА"),
         ("07.03.01", "Архитектура", "Архитектурное проектирование", "Голубич С.А", "ВШДиА"),
         ("07.04.03", "Дизайн архитектурной среды", "Дизайн архитектурной среды", "Рубец Е.А.", "ВШДиА"),
         ("08.03.01", "Строительство", "Экспертиза недвижимости и реновация городских и курортных территорий", "Малых М.С.", "ВШДиА"),
@@ -290,7 +295,7 @@ def init_db():
         ("45.04.04", "Интеллектуальные системы в гуманитарной среде", "Цифровые технологии и искусственный интеллект", "Тимченко О.В.", "ИИЯМТ"),
         ("46.01.03", "Делопроизводитель", "Организация документооборота", "Гетманова Е.С.", "ВШУ"),
         ("46.03.01", "История", "История международных отношений", "Николаенко Н.Д.", "ВШУ"),
-        ("46.04.01", "История", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI wв.): исторический анализ и политическое прогнозирование", "Ермаков В.П.", "ВШУ"),
+        ("46.04.01", "История", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование", "Ермаков В.П.", "ВШУ"),
         ("47.04.01", "Философия", "Философия управления и методология принятия решений в сфере креативных индустрий", "Суховская Д.Н.", "ВШУ"),
         ("48.03.01", "Теология", "Государственно-конфессиональные отношения (с православным блоком дисциплин)", "Осипов С.К.", "ВШУ"),
         ("48.03.01", "Теология", "Государственно-конфессиональные отношения (с исламским блоком дисциплин)", "Осипов С.К.", "ВШУ"),
@@ -306,14 +311,12 @@ def init_db():
         ("58.03.01", "Востоковедение и африканистика", "История стран Азии и Африки", "Николаенко Н.Д.", "ВШУ")
     ]
 
-    # ИСПРАВЛЕНО: Добавлен набор для строгой фильтрации и дедупликации ОПОП перед записью в БД
     seen_specialties = set()
 
     for code, name, profile, sup_name, inst in raw_specialties:
-        # Уникальный ключ для фильтрации дубликатов
         unique_key = (code, name, profile, sup_name)
         if unique_key in seen_specialties:
-            continue  # Пропускаем, если такая запись уже обработана
+            continue  
         seen_specialties.add(unique_key)
 
         cursor.execute("INSERT OR IGNORE INTO supervisors (name) VALUES (?)", (sup_name,))
@@ -325,9 +328,29 @@ def init_db():
             VALUES (?, ?, ?, ?, ?)
         """, (code, name, profile, sup_id, inst))
 
+    # СИСТЕМНАЯ МИГРАЦИЯ ДЛЯ ВШУ (Разделение ролей наставников для строк 16, 17, 22)
+    dual_roles_setup = [
+        ("46.03.01", "История международных отношений", "Линец С.И."),
+        ("46.04.01", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование", "Линец С.И."),
+        ("58.03.01", "История стран Азии и Африки", "Каспаров К.В.")
+    ]
+
+    for code, profile, mentor_name in dual_roles_setup:
+        # Убедимся, что наставник добавлен в supervisors
+        cursor.execute("INSERT OR IGNORE INTO supervisors (name) VALUES (?)", (mentor_name,))
+        cursor.execute("SELECT id FROM supervisors WHERE name = ?", (mentor_name,))
+        m_id = cursor.fetchone()[0]
+
+        # Обновляем mentor_id у конкретных специальностей ВШУ
+        cursor.execute("""
+            UPDATE specialties 
+            SET mentor_id = ? 
+            WHERE code = ? AND profile = ? AND institute = 'ВШУ'
+        """, (m_id, code, profile))
+
     conn.commit()
     conn.close()
-    print("База данных создана и наполнена успешно!")
+    print("База данных создана, миграции выполнены!")
 
 init_db()
 
@@ -335,9 +358,13 @@ init_db()
 def get_specialties(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
     cursor.execute("""
-        SELECT s.id, s.code, s.name, s.profile, s.institute, sup.name as supervisor_name
+        SELECT s.id, s.code, s.name, s.profile, s.institute, 
+               sup.name as supervisor_name,
+               ment.name as mentor_name,
+               CASE WHEN s.mentor_id IS NOT NULL THEN 1 ELSE 0 END as has_split_roles
         FROM specialties s
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
         ORDER BY s.code
     """)
     rows = cursor.fetchall()
@@ -366,26 +393,51 @@ def vote_student(data: StudentVote, db: sqlite3.Connection = Depends(get_db)):
 
 @app.post("/api/vote/expert")
 def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
-    # Защита от прямого POST-запроса в обход модального окна
     verify_expert_auth(x_password)
     
     cursor = db.cursor()
+    
+    # ПРОВЕРКА И ЧАСТИЧНОЕ ОБНОВЛЕНИЕ СТРОКИ (UPDATE) ДЛЯ ИСКЛЮЧЕНИЯ ЗАТИРАНИЯ ГЛАСОВ ПРИ РАЗДЕЛЕНИИ
     cursor.execute("""
-        DELETE FROM expert_votes 
+        SELECT id, nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3
+        FROM expert_votes
         WHERE specialty_id = ? AND evaluator_name = ? AND role_type = ?
     """, (data.specialty_id, data.evaluator_name, data.role_type))
     
-    cursor.execute("""
-        INSERT INTO expert_votes (
-            specialty_id, evaluator_name, role_type, 
-            nast_q1, nast_q2, nast_q3, nast_q4,
-            admin_q1, admin_q2, admin_q3
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        data.specialty_id, data.evaluator_name, data.role_type,
-        data.nast_q1, data.nast_q2, data.nast_q3, data.nast_q4,
-        data.admin_q1, data.admin_q2, data.admin_q3
-    ))
+    row = cursor.fetchone()
+    
+    if row:
+        vote_id = row[0]
+        # Если пришедшая оценка None, сохраняем старую оценку из базы данных
+        nast_q1 = data.nast_q1 if data.nast_q1 is not None else row[1]
+        nast_q2 = data.nast_q2 if data.nast_q2 is not None else row[2]
+        nast_q3 = data.nast_q3 if data.nast_q3 is not None else row[3]
+        nast_q4 = data.nast_q4 if data.nast_q4 is not None else row[4]
+        
+        admin_q1 = data.admin_q1 if data.admin_q1 is not None else row[5]
+        admin_q2 = data.admin_q2 if data.admin_q2 is not None else row[6]
+        admin_q3 = data.admin_q3 if data.admin_q3 is not None else row[7]
+        
+        cursor.execute("""
+            UPDATE expert_votes
+            SET nast_q1 = ?, nast_q2 = ?, nast_q3 = ?, nast_q4 = ?,
+                admin_q1 = ?, admin_q2 = ?, admin_q3 = ?
+            WHERE id = ?
+        """, (nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3, vote_id))
+    else:
+        # Записи нет -> сохраняем новую запись
+        cursor.execute("""
+            INSERT INTO expert_votes (
+                specialty_id, evaluator_name, role_type, 
+                nast_q1, nast_q2, nast_q3, nast_q4,
+                admin_q1, admin_q2, admin_q3
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data.specialty_id, data.evaluator_name, data.role_type,
+            data.nast_q1, data.nast_q2, data.nast_q3, data.nast_q4,
+            data.admin_q1, data.admin_q2, data.admin_q3
+        ))
+        
     db.commit()
     return {"status": "success"}
 
@@ -417,9 +469,12 @@ def calculate_ratings_list(db: sqlite3.Connection):
     cursor = db.cursor()
     
     cursor.execute("""
-        SELECT s.id, s.code, s.name as spec_name, s.profile, s.institute, sup.name as supervisor_name
+        SELECT s.id, s.code, s.name as spec_name, s.profile, s.institute, 
+               sup.name as supervisor_name,
+               ment.name as mentor_name
         FROM specialties s
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
     """)
     specs = cursor.fetchall()
 
@@ -474,13 +529,19 @@ def calculate_ratings_list(db: sqlite3.Connection):
         z_total = (z_nast + z_admin) / 2.0
         r_a = (0.35 * k_sroki) + (0.25 * d_total) + (0.20 * z_total) + (0.20 * s_stud)
 
+        # Вывод объединенных имен ОПОП в случае разделения
+        if spec["mentor_name"] and spec["mentor_name"] != spec["supervisor_name"]:
+            display_name = f'{spec["supervisor_name"]} (Админ) / {spec["mentor_name"]} (Наст)'
+        else:
+            display_name = spec["supervisor_name"]
+
         results.append({
             "id": sid,
             "code": spec["code"],
             "spec_name": spec["spec_name"],
             "profile": spec["profile"],
             "institute": spec["institute"],
-            "supervisor_name": spec["supervisor_name"],
+            "supervisor_name": display_name,
             "voters_count": s_count,
             "k_sroki": k_sroki,
             "student_avg": round(s_stud, 2),
@@ -600,7 +661,7 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
             "hods_voted": total_hods,
             "hods_today": today_hods,
             "hods_yesterday_curve": hods_yesterday_curve,
-            "hods_today_curve": hods_today_curve,
+            "hods_today_curve": today_hods,
         },
         "inst_today": inst_today,
         "ratings": ratings
@@ -857,7 +918,7 @@ FILE: static/student.html
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Встроенный SVG-Favicon в виде шапочки 🎓 (убирает 404 ошибку из консоли) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <link rel="icon" href="https://pgu.ru/images/pgu/logo.png">
     
     <script src="/assets/js/shared.js"></script>
 </head>
@@ -899,7 +960,6 @@ FILE: static/student.html
             <h2 class="text-2xl font-bold mb-2 text-main">{{ t.submittedTitle }}</h2>
             <p class="mb-6 text-secondary">{{ t.submittedDesc }}</p>
             
-            <!-- ИСПРАВЛЕНО: Заменили переход на главную реактивной кнопкой сброса -->
             <button @click="resetForm" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all focus:outline-none">
                 {{ t.retakeBtn }}
             </button>
@@ -923,7 +983,7 @@ FILE: static/student.html
                            class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
                     
-                    <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и руководителя направления -->
+                    <!-- ИСПРАВЛЕНО: Выпадающее меню выводит Наставника в случае разделенных ОПОП -->
                     <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto dropdown-menu">
                         <div v-for="spec in filteredSpecialties" 
                              :key="spec.id" 
@@ -932,13 +992,13 @@ FILE: static/student.html
                             <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                             <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">{{ spec.profile }}</div>
                             <div class="text-xs text-secondary mt-0.5">
-                                {{ t.supervisorLabel }}: <span class="font-bold text-main">{{ spec.supervisor_name }}</span>
+                                {{ t.supervisorLabel }}: <span class="font-bold text-main">{{ spec.has_split_roles ? spec.mentor_name : spec.supervisor_name }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Карточка выбранной специальности -->
+                <!-- Карточка выбранной специальности (заменена на info-block) -->
                 <div v-if="selectedSpec" class="mt-4 p-4 info-block rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                         <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t.selectedCardTitle }}</div>
@@ -948,7 +1008,8 @@ FILE: static/student.html
                     </div>
                     <div class="sm:text-right">
                         <div class="text-xs text-gray-400 uppercase">{{ t.supervisorLabel }}</div>
-                        <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
+                        <!-- ИСПРАВЛЕНО: Для студентов Оцениваемый руководитель — это Наставник -->
+                        <div class="font-bold text-main">{{ selectedSpec.has_split_roles ? selectedSpec.mentor_name : selectedSpec.supervisor_name }}</div>
                     </div>
                 </div>
             </div>
@@ -1011,7 +1072,7 @@ FILE: static/expert.html
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <link rel="icon" href="https://pgu.ru/images/pgu/logo.png">
     <script src="/assets/js/shared.js"></script>
 </head>
 <body class="py-8 px-4">
@@ -1135,7 +1196,7 @@ FILE: static/expert.html
                                class="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                         <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
 
-                        <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и руководителя направления -->
+                        <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и наставников -->
                         <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-y-auto dropdown-menu">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
@@ -1144,7 +1205,7 @@ FILE: static/expert.html
                                 <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                                 <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">{{ spec.profile }}</div>
                                 <div class="text-xs text-secondary mt-0.5">
-                                    Руководитель: <span class="font-bold text-main">{{ spec.supervisor_name }}</span>
+                                    Руководитель: <span class="font-bold text-main">{{ spec.has_split_roles ? (spec.supervisor_name + ' / ' + spec.mentor_name) : spec.supervisor_name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -1158,16 +1219,44 @@ FILE: static/expert.html
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-400 uppercase">Оцениваемый руководитель</div>
-                            <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
+                            <!-- ИСПРАВЛЕНО: Показываем ФИО в зависимости от выбора роли для разделенных ОПОП ВШУ -->
+                            <div class="font-bold text-main">
+                                <span v-if="selectedSpec.has_split_roles">
+                                    <span v-if="selectedRoleType === 'admin'">{{ selectedSpec.supervisor_name }}</span>
+                                    <span v-else-if="selectedRoleType === 'nast'">{{ selectedSpec.mentor_name }}</span>
+                                    <span v-else class="text-yellow-600 font-semibold text-xs"><i class="fa-solid fa-circle-question mr-1"></i>{{ t.selectRolePlaceholder }}</span>
+                                </span>
+                                <span v-else>
+                                    {{ selectedSpec.supervisor_name }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ================= ШАГ 4: ВЫБОР ОЦЕНИВАЕМОЙ РОЛИ (ТОЛЬКО ДЛЯ РАЗДЕЛЕННЫХ ВШУ) ================= -->
+                <div v-if="selectedSpec && selectedSpec.has_split_roles" class="mb-8">
+                    <label class="block text-sm font-bold mb-2 text-main">{{ t.selectRoleToEvaluate }}</label>
+                    <div class="grid grid-cols-2 gap-3 animate-entrance">
+                        <button @click="selectedRoleType = 'admin'" 
+                                :class="[selectedRoleType === 'admin' ? 'btn-active' : 'btn-inactive']"
+                                class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                            {{ t.adminRoleLabel }}
+                        </button>
+                        <button @click="selectedRoleType = 'nast'" 
+                                :class="[selectedRoleType === 'nast' ? 'btn-active' : 'btn-inactive']"
+                                class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                            {{ t.mentorRoleLabel }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- ================= БЛОКИ ОЦЕНКИ ================= -->
-                <div v-if="selectedSpec" class="space-y-8 mt-8">
+                <!-- Показываем Блок вопросов только если ОПОП не разделен ИЛИ выбрана конкретная роль -->
+                <div v-if="selectedSpec && (!selectedSpec.has_split_roles || selectedRoleType)" class="space-y-8 mt-8">
                     
-                    <!-- БЛОК А: НАСТАВНИК -->
-                    <div class="border-t border-gray-200/50 pt-6">
+                    <!-- БЛОК А: НАСТАВНИК (скрывается если оцениваем роль Администратора) -->
+                    <div v-if="!selectedSpec.has_split_roles || selectedRoleType === 'nast'" class="border-t border-gray-200/50 pt-6 animate-entrance">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
                             <span class="btn-inactive px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
                             Деятельность в роли Наставника ОПОП
@@ -1189,8 +1278,8 @@ FILE: static/expert.html
                         </div>
                     </div>
 
-                    <!-- БЛОК Б: АДМИНИСТРАТОР -->
-                    <div class="border-t border-gray-200/50 pt-8">
+                    <!-- БЛОК Б: АДМИНИСТРАТОР (скрывается если оцениваем роль Наставника) -->
+                    <div v-if="!selectedSpec.has_split_roles || selectedRoleType === 'admin'" class="border-t border-gray-200/50 pt-8 animate-entrance">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
                             <span class="btn-inactive px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
                             Деятельность в роли Администратора ОПОП
@@ -2021,6 +2110,213 @@ FILE: static/assets/js/shared.js
     }
 })();
 
+// ---- 1. ГИГАНТСКИЙ СЛОВАРЬ ПЕРЕВОДА ДИСЦИПЛИН (ИНТЕГРИРОВАН СЮДА) ----
+window.specialtyTranslations = {
+    "Обеспечение информационной безопасности автоматизированных систем": "Information Security of Automated Systems",
+    "Страховое дело (по отраслям)": "Insurance Business (by industry)",
+    "Банковское дело": "Banking",
+    "Экономическая безопасность": "Economic Security",
+    "Экономико-правовое обеспечение экономической безопасности": "Economic and Legal Support of Economic Security",
+    "Право и организация социального обеспечения (на базе основного общего образования)": "Law and Social Security Organization (Basic General Education)",
+    "Право и судебное администрирование": "Law and Court Administration",
+    "Гостиничное дело": "Hotel Business",
+    "Графический дизайнер": "Graphic Design",
+    "Архитектура": "Architecture",
+    "Архитектурное проектирование": "Architectural Design",
+    "Дизайн архитектурной среды": "Design of Architectural Environment",
+    "Строительство": "Civil Engineering",
+    "Экспертиза недвижимости и реновация городских и курортных территорий": "Real Estate Expertise and Renovation of Urban and Resort Territories",
+    "Оператор информационных систем и ресурсов (на базе основного общего образования)": "Operator of Information Systems and Resources (Basic)",
+    "Оператор информационных систем и ресурсов (на базе среднего общего образования)": "Operator of Information Systems and Resources (Secondary)",
+    "Оператор интерфейсной графики": "Interface Graphics Operator",
+    "Прикладная информатика": "Applied Informatics",
+    "Прикладная информатика в менеджменте": "Applied Informatics in Management",
+    "Информационная безопасность": "Information Security",
+    "Организация и технологии защиты информации": "Organization and Technologies of Information Protection",
+    "Управление информационной безупречностью и технологии защиты информации": "Information Security Management and Protection Technologies",
+    "Мехатроника и робототехника": "Mechatronics and Robotics",
+    "Интеллектуальная сервисная робототехника": "Intelligent Service Robotics",
+    "Землеустройство": "Land Management",
+    "Земельно-имущественные отношения": "Land and Property Relations",
+    "Землеустройство и кадастры": "Land Management and Cadastres",
+    "Кадастр недвижимости": "Real Estate Cadastre",
+    "Инноватика": "Innovatics",
+    "Управление инновационным бизнесом": "Innovative Business Management",
+    "Психология": "Psychology",
+    "Прикладная психология": "Applied Psychology",
+    "Психология служебной деятельности": "Psychology of Interdepartmental Activity",
+    "Психология безопасности": "Safety Psychology",
+    "Психология безопасности, кадрового менеджмента и успешной профессиональной деятельности": "Psychology of Security, HR Management, and Professional Success",
+    "Управление страховым бизнесом": "Insurance Business Management",
+    "Операционная деятельность в логистике": "Operational Activity in Logistics",
+    "Управление логистическими процессами": "Logistics Process Management",
+    "Конгрессно-выставочная деятельность": "Congress and Exhibition Activity",
+    "Экономика": "Economics",
+    "Мировая экономика": "World Economy",
+    "Менеджмент": "Management",
+    "Управление бизнес-организациями": "Business Organization Management",
+    "Государственное и муниципальное управление": "State and Municipal Administration",
+    "Публичное управление устойчивым развитием территорий": "Public Management of Sustainable Regional Development",
+    "Бизнес-информатика": "Business Informatics",
+    "Информационные технологии в бизнесе": "Information Technology in Business",
+    "Таможенное дело": "Customs Affairs",
+    "Регулирование таможенной деятельности": "Regulation of Customs Activity",
+    "Международные экономические отношения": "International Economic Relations",
+    "Стратегетическое управление инновационной деятельностью предпринимательских структур в международно-ориентированной среде": "Strategic Management of Innovative Activity of Entrepreneurial Structures",
+    "Современное публичное политико-административное управление": "Modern Public Political and Administrative Management",
+    "Социальная работа": "Social Work",
+    "Организационно-управленческие технологии в социальной работе": "Organizational and Management Technologies in Social Work",
+    "Организация работы с молодежью": "Youth Work Organization",
+    "Организационно-управленческие технологии в работе с молодежью": "Organizational and Management Technologies in Youth Work",
+    "Юриспруденция": "Jurisprudence",
+    "Юрист в сфере правового обеспечения деятельности организаций и граждан": "Lawyer in Legal Support of Organizations and Citizens",
+    "Юрист в сфере правоохранительной деятельности": "Lawyer in Law Enforcement",
+    "Юрист в сфере судебного администрирования": "Lawyer in Judicial Administration",
+    "Юрист в сфере социального обеспечения": "Lawyer in Social Security",
+    "Государственно-правовой": "State-Legal",
+    "Цифровое право": "Digital Law",
+    "Гражданско-правовой": "Civil-Legal",
+    "Международно-правовой": "International-Legal",
+    "Право в сфере международной безопасности": "International Security Law",
+    "Публичное и частное право": "Public and Private Law",
+    "Уголовно-правовой": "Criminal-Legal",
+    "Судебная экспертиза": "Forensic Expertise",
+    "Криминалистические экспертизы": "Criminalistic Expertises",
+    "Инженерно-технические экспертизы": "Engineering and Technical Expertises",
+    "Судебная и прокурорская деятельность": "Judicial and Prosecutorial Activity",
+    "Судебная деятельность": "Judicial Activity",
+    "Уголовное право, уголовный процесс": "Criminal Law and Criminal Procedure",
+    "Юрист в сфере частного права": "Lawyer in Private Law",
+    "Юрист в органах государственной и муниципальной власти": "Lawyer in State and Municipal Authorities",
+    "Правовое обеспечение деятельности органов публичной власти, в том числе судов и органов прокуратуры": "Legal Support of Public Authorities including Courts and Prosecution",
+    "Политология": "Political Science",
+    "Прикладная политология": "Applied Political Science",
+    "Международные отношения": "International Relations",
+    "Международная безопасность": "International Security",
+    "Публичная политика и социальные науки": "Public Policy and Social Sciences",
+    "Стратегическое управление и администрирование в публичной политике": "Strategic Management and Administration in Public Policy",
+    "Мировая политика": "World Politics",
+    "Реклама": "Advertising",
+    "Реклама и связи с общественностью": "Advertising and Public Relations",
+    "Cвязи с общественностью в политике и бизнесе": "Public Relations in Politics and Business",
+    "Журналистика": "Journalism",
+    "Международная журналистика": "International Journalism",
+    "Медиакоммуникации": "Media Communications",
+    "Глобальные медиа и коммуникации": "Global Media and Communications",
+    "Социально-политические коммуникации в современном обществе": "Socio-Political Communications in Modern Society",
+    "Коммерческая реклама": "Commercial Advertising",
+    "Медиапродюсирование и медиапроизводство": "Media Producing and Media Production",
+    "Туризм и гостеприимство (на базе основного общего образования)": "Tourism and Hospitality (Basic Education)",
+    "Туроператорские и турагентские услуги": "Tour Operator and Travel Agency Services",
+    "Гостиничные услуги": "Hotel Services",
+    "Сервис": "Service",
+    "Экспертиза и оценка недвижимости": "Real Estate Assessment and Evaluation",
+    "Сервис-менеджмент в креативных и конгрессно-выставочных проектах рекреационных территорий": "Service Management in Creative and MICE Projects",
+    "Управление в креативной ресторанно-гастрономической индустрии рекреационных территорий": "Management in Creative Restaurant and Gastronomy Industry",
+    "Туризм": "Tourism",
+    "Технология и организация туроператорских и турагентских услуг": "Technology and Organization of Tour Operator and Travel Agency Services",
+    "Гостиничное дело": "Hotel Management",
+    "Гостиничная деятельность": "Hotel Activity",
+    "Туристский менеджмент": "Tourism Management",
+    "Международная гостиничная индустрия": "International Hotel Industry",
+    "Педагогическое образование (с двумя профилями подготовки)": "Teacher Education (with two profiles)",
+    "Изобразительное искусство и английский язык": "Fine Arts and English",
+    "Английский язык и немецкий язык": "English and German",
+    "Английский язык и дополнительное образование": "English and Extra Education",
+    "Русский язык и китайский язык": "Russian and Chinese",
+    "Русский язык и литература": "Russian and Literature",
+    "Испанский язык и английский язык": "Spanish and English",
+    "Математика и информатика": "Mathematics and Computer Science",
+    "Французский и английский языки": "French and English",
+    "Английский язык и педагогическая психология": "English and Educational Psychology",
+    "История и китайский язык": "History and Chinese",
+    "Информатика и английский язык": "Computer Science and English",
+    "История и обществознание": "History and Social Studies",
+    "Педагогическое образование": "Teacher Education",
+    "Филологическое образование": "Philological Education",
+    "Преподавание иностранных языков (английский язык)": "Teaching Foreign Languages (English)",
+    "Деятельностные образовательные траектории: иностранный язык и педагогическая психология": "Foreign Language and Educational Psychology",
+    "Лингвопедагогические модели обучения русскому языку как иностранному": "Linguopedagogical Models of Teaching Russian as Foreign",
+    "Лингвистика": "Linguistics",
+    "Теория и методика преподавания иностранных языков и культур (английский и испанский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (English/Spanish)",
+    "Теория и практика межкультурной коммуникации (в сфере энергетики) – английский и немецкий языки": "Theory and Practice of Intercultural Communication (Energy) - English/German",
+    "Теория и практика межкультурной коммуникации (в сфере рекламы и маркетинга) – английский и итальянский языки": "Theory and Practice of Intercultural Communication (Advertising/Marketing) - English/Italian",
+    "Теория и практика межкультурной коммуникации (в сфере рекламы и маркетинга) английский и испанский языки": "Theory and Practice of Intercultural Communication (Advertising/Marketing) English/Spanish",
+    "Теория и практика межкультурной коммуникации (в сфере цифровых технологий и искусственного интеллекта) – английский и испанский языки": "Theory and Practice of Intercultural Communication (Digital/AI) - English/Spanish",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и немецкий языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/German",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и итальянский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Italian",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и испанский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Spanish",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и китайский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Chinese",
+    "Теория и практика межкультурной коммуникации в сфере бизнеса – испанский и английский языки": "Theory and Practice of Intercultural Communication in Business - Spanish/English",
+    "Теория и практика межкультурной коммуникации в сфере бизнеса – французский и английский языки": "Theory and Practice of Intercultural Communication in Business - French/English",
+    "Теория и практика межкультурной коммуникации в сфере бизнеса – немецкий и английский языки": "Theory and Practice of Intercultural Communication in Business - German/English",
+    "Теория и методика преподавания иностранных языков и культур (английский и французский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (English/French)",
+    "Теория и практика межкультурной коммуникации (английский и испанский языки)": "Theory and Practice of Intercultural Communication (English/Spanish)",
+    "Теория и практика межкультурной коммуникации (английский и итальянский языки)": "Theory and Practice of Intercultural Communication (English/Italian)",
+    "Теория и практика межкультурной коммуникации (английский и немецкий языки)": "Theory and Practice of Intercultural Communication (English/German)",
+    "Теория и методика преподавания иностранных языков и культур (немецкий и английский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (German/English)",
+    "Теория и методика преподавания иностранных языков и культур (французский и английский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (French/English)",
+    "Теория и практика межкультурной коммуникации (испанский и английский языки)": "Theory and Practice of Intercultural Communication (Spanish/English)",
+    "Теория и практика межкультурной коммуникации (немецкий и английский языки)": "Theory and Practice of Intercultural Communication (German/English)",
+    "Теория и практика межкультурной коммуникации (французский и английский языки)": "Theory and Practice of Intercultural Communication (French/English)",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – испанский и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - Spanish/English",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – немецкий и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - German/English",
+    "Теория, методика преподавания иностранных языков, межкультурная коммуникация – французский и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - French/English",
+    "Перевод и переводоведение (английский и французский языки)": "Translation and Translation Studies (English/French)",
+    "Перевод и переводоведение (английский и испанский языки)": "Translation and Translation Studies (English/Spanish)",
+    "Перевод и переводоведение (немецкий и английский языки)": "Translation and Translation Studies (German/English)",
+    "Перевод и переводоведение (фарси и английский языки)": "Translation and Translation Studies (Farsi/English)",
+    "Перевод и переводоведение (китайский и английский языки)": "Translation and Translation Studies (Chinese/English)",
+    "Перевод и переводоведение (арабский и английский языки)": "Translation and Translation Studies (Arabic/English)",
+    "Теория и практика межкультурной коммуникации (четырехъязычие: английский, немецкий, французский, испанский языки)": "Theory and Practice of Intercultural Communication (Four Languages: English, German, French, Spanish)",
+    "Перевод и переводоведение (английский и немецкий языки)": "Translation and Translation Studies (English/German)",
+    "Интеллектуальные системы в гуманитарной сфере": "Intellectual Systems in Humanities",
+    "Разработка и программирование интеллектуальных систем в гуманитарной сфере": "Development and Programming of Intellectual Systems in Humanities",
+    "Лингвистическое обеспечение межгосударственных отношений (арабский и английский языки)": "Linguistic Support of Interstate Relations (Arabic/English)",
+    "Лингвистическое обеспечение межгосударственных отношений (турецкий и английский языки)": "Linguistic Support of Interstate Relations (Turkish/English)",
+    "Специальный перевод (перевод в сфере туризма и экскурсионного дела) – английский и китайский языки": "Special Translation (Tourism and Excursions) - English/Chinese",
+    "Специальный перевод (перевод в нефтегазовой сфере) – английский и китайский языки": "Special Translation (Oil and Gas Sector) - English/Chinese",
+    "Теория перевода и межъязыковая коммуникация": "Translation Theory and Interlingual Communication",
+    "Лингвистика рекламы и нейромаркетинга": "Linguistics of Advertising and Neuromarketing",
+    "Лингвистика в сфере деловой и профессиональной коммуникации (германские и романские языки)»": "Linguistics in Business and Professional Communication (Germanic and Romance Languages)",
+    "Теория и практика аудиовизуального перевода": "Theory and Practice of Audiovisual Translation",
+    "Сопоставительное изучение языков и культур и инновационные стратегии речевого общения (романские и германские языки)": "Comparative Study of Languages and Cultures and Innovative Strategies of Speech Communication (Romance/Germanic)",
+    "Интеллектуальные системы в гуманитарной среде": "Intellectual Systems in Humanitarian Environment",
+    "Цифровые технологии и искусственный интеллект": "Digital Technologies and Artificial Intelligence",
+    "Делопроизводитель": "Clerk",
+    "Организация документооборота": "Document Flow Organization",
+    "История": "History",
+    "История международных отношений": "History of International Relations",
+    "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование": "North Caucasus in the Civilizational Space of Russia",
+    "Философия": "Philosophy",
+    "Философия управления и методология принятия решений в сфере креативных индустрий": "Philosophy of Management and Decision-Making Methodology in Creative Industries",
+    "Теология": "Theology",
+    "Государственно-конфессиональные отношения (с православным блоком дисциплин)": "State-Confessional Relations (with Orthodox Block)",
+    "Государственно-конфессиональные отношения (с исламским блоком дисциплин)": "State-Confessional Relations (with Islamic Block)",
+    "Государственно-конфессиональные отношения (с православным компонентом)": "State-Confessional Relations (with Orthodox Component)",
+    "Государственно-конфессиональные отношения (с исламским компонентом)": "State-Confessional Relations (with Islamic Component)",
+    "Рекреация и спортивно-оздоровительный туризм": "Recreation and Sports-Health Tourism",
+    "Рекреационно-оздоровительная деятельность": "Recreation and Health Activity",
+    "Социально-культурная деятельность": "Social and Cultural Activity",
+    "Менеджмент социально-культурной деятельность": "Management of Social and Cultural Activity",
+    "Литературное творчество": "Literary Creation",
+    "Литературный работник, переводчик художественной литературы": "Literary Worker, Translator of Fiction",
+    "Дизайн": "Design",
+    "Коммуникативный дизайн": "Communicative Design",
+    "Дизайн среды": "Environmental Design",
+    "Декоративно-прикладное искусство и народные промыслы": "Decorative and Applied Arts and Folk Crafts",
+    "Арт-технологии в декоративно-прикладном искусстве": "Art Technologies in Decorative and Applied Arts",
+    "Востоковедение и африканистика": "Asian and African Studies",
+    "История стран Азии и Африки": "History of Asian and African Countries",
+    "-": "-"
+};
+
+// Функция перевода ОПОП
+window.translateSpecialtyText = (text, lang) => {
+    if (lang === 'ru') return text;
+    return window.specialtyTranslations[text] || text;
+};
+
 // Словарь транслитерации руководителей для английской версии ОПОП
 const supervisorTranslations = {
     "Воробьев Г.А.": "Vorobiev G.A.",
@@ -2056,7 +2352,7 @@ const supervisorTranslations = {
     "Серикова С.В.": "Serikova S.V.",
     "Бабошина Е.В.": "Baboshina E.V.",
     "Валяровский Ф.И.": "Valyarovsky F.I.",
-    "Акименко М.А.": "Akimenko M.A.",
+    "Акименко M.А.": "Akimenko M.A.",
     "Попов А.П.": "Popov A.P.",
     "Некрасов Е.Е.": "Nekrasov E.E.",
     "Кандыба Р.А.": "Kandyba R.A.",
@@ -2111,7 +2407,9 @@ const supervisorTranslations = {
     "Бабаян А.В.": "Babayan A.V.",
     "Шульженко В.И.": "Shulzhenko V.I.",
     "Чубарева О.В.": "Chubareva O.V.",
-    "Еремкина Н.В.": "Eremkina N.V."
+    "Еремкина Н.В.": "Eremkina N.V.",
+    "Линец С.И.": "Linets S.I.",
+    "Каспаров К.В.": "Kasparov K.V."
 };
 
 window.translateSupervisor = (name, lang) => {
@@ -2156,9 +2454,13 @@ window.globalTranslations = {
         enterPassword: "Пожалуйста, введите пароль доступа для продолжения.",
         passwordPlaceholder: "Введите пароль...",
         loginBtn: "Войти в панель",
+        retakeBtn: "Пройти еще раз",
         
-        // Кнопка рестарта опроса для студентов (Добавлена!)
-        retakeBtn: "Пройти еще раз"
+        // Специфичные тексты разделения ВШУ для экспертов
+        selectRoleToEvaluate: "4. Выберите роль руководителя для оценки",
+        adminRoleLabel: "Администратор ОПОП",
+        mentorRoleLabel: "Наставник ОПОП",
+        selectRolePlaceholder: "Выберите роль ниже"
     },
     en: {
         headerTitle: "OPOP Assessment",
@@ -2196,9 +2498,13 @@ window.globalTranslations = {
         enterPassword: "Please enter the access password to continue.",
         passwordPlaceholder: "Enter password...",
         loginBtn: "Log In",
+        retakeBtn: "Take survey again",
         
-        // Кнопка рестарта опроса для студентов (Добавлена!)
-        retakeBtn: "Take survey again"
+        // Специфичные тексты разделения ВШУ для экспертов
+        selectRoleToEvaluate: "4. Select the role to evaluate",
+        adminRoleLabel: "OPOP Administrator",
+        mentorRoleLabel: "OPOP Mentor",
+        selectRolePlaceholder: "Select a role below"
     }
 };
 
@@ -2336,212 +2642,6 @@ createApp({
 
         const answers = ref({ q1: null, q2: null, q3: null, q4: null, q5: null });
 
-        // ---- СЛОВАРЬ ПЕРЕВОДА ДИСЦИПЛИН ----
-        const specialtyTranslations = {
-            "Обеспечение информационной безопасности автоматизированных систем": "Information Security of Automated Systems",
-            "Страховое дело (по отраслям)": "Insurance Business (by industry)",
-            "Банковское дело": "Banking",
-            "Экономическая безопасность": "Economic Security",
-            "Экономико-правовое обеспечение экономической безопасности": "Economic and Legal Support of Economic Security",
-            "Право и организация социального обеспечения (на базе основного общего образования)": "Law and Social Security Organization (Basic General Education)",
-            "Право и судебное администрирование": "Law and Court Administration",
-            "Гостиничное дело": "Hotel Business",
-            "Графический дизайнер": "Graphic Design",
-            "Архитектура": "Architecture",
-            "Архитектурное проектирование": "Architectural Design",
-            "Дизайн архитектурной среды": "Design of Architectural Environment",
-            "Строительство": "Civil Engineering",
-            "Экспертиза недвижимости и реновация городских и курортных территорий": "Real Estate Expertise and Renovation of Urban and Resort Territories",
-            "Оператор информационных систем и ресурсов (на базе основного общего образования)": "Operator of Information Systems and Resources (Basic)",
-            "Оператор информационных систем и ресурсов (на базе среднего общего образования)": "Operator of Information Systems and Resources (Secondary)",
-            "Оператор интерфейсной графики": "Interface Graphics Operator",
-            "Прикладная информатика": "Applied Informatics",
-            "Прикладная информатика в менеджменте": "Applied Informatics in Management",
-            "Информационная безопасность": "Information Security",
-            "Организация и технологии защиты информации": "Organization and Technologies of Information Protection",
-            "Управление информационной безупречностью и технологии защиты информации": "Information Security Management and Protection Technologies",
-            "Мехатроника и робототехника": "Mechatronics and Robotics",
-            "Интеллектуальная сервисная робототехника": "Intelligent Service Robotics",
-            "Землеустройство": "Land Management",
-            "Земельно-имущественные отношения": "Land and Property Relations",
-            "Землеустройство и кадастры": "Land Management and Cadastres",
-            "Кадастр недвижимости": "Real Estate Cadastre",
-            "Инноватика": "Innovatics",
-            "Управление инновационным бизнесом": "Innovative Business Management",
-            "Психология": "Psychology",
-            "Прикладная психология": "Applied Psychology",
-            "Психология служебной деятельности": "Psychology of Interdepartmental Activity",
-            "Психология безопасности": "Safety Psychology",
-            "Психология безопасности, кадрового менеджмента и успешной профессиональной деятельности": "Psychology of Security, HR Management, and Professional Success",
-            "Управление страховым бизнесом": "Insurance Business Management",
-            "Операционная деятельность в логистике": "Operational Activity in Logistics",
-            "Управление логистическими процессами": "Logistics Process Management",
-            "Конгрессно-выставочная деятельность": "Congress and Exhibition Activity",
-            "Экономика": "Economics",
-            "Мировая экономика": "World Economy",
-            "Менеджмент": "Management",
-            "Управление бизнес-организациями": "Business Organization Management",
-            "Государственное и муниципальное управление": "State and Municipal Administration",
-            "Публичное управление устойчивым развитием территорий": "Public Management of Sustainable Regional Development",
-            "Бизнес-информатика": "Business Informatics",
-            "Информационные технологии в бизнесе": "Information Technology in Business",
-            "Таможенное дело": "Customs Affairs",
-            "Регулирование таможенной деятельности": "Regulation of Customs Activity",
-            "Международные экономические отношения": "International Economic Relations",
-            "Стратегетическое управление инновационной деятельностью предпринимательских структур в международно-ориентированной среде": "Strategic Management of Innovative Activity of Entrepreneurial Structures",
-            "Современное публичное политико-административное управление": "Modern Public Political and Administrative Management",
-            "Социальная работа": "Social Work",
-            "Организационно-управленческие технологии в социальной работе": "Organizational and Management Technologies in Social Work",
-            "Организация работы с молодежью": "Youth Work Organization",
-            "Организационно-управленческие технологии в работе с молодежью": "Organizational and Management Technologies in Youth Work",
-            "Юриспруденция": "Jurisprudence",
-            "Юрист в сфере правового обеспечения деятельности организаций и граждан": "Lawyer in Legal Support of Organizations and Citizens",
-            "Юрист в сфере правоохранительной деятельности": "Lawyer in Law Enforcement",
-            "Юрист в сфере судебного администрирования": "Lawyer in Judicial Administration",
-            "Юрист в сфере социального обеспечения": "Lawyer in Social Security",
-            "Государственно-правовой": "State-Legal",
-            "Цифровое право": "Digital Law",
-            "Гражданско-правовой": "Civil-Legal",
-            "Международно-правовой": "International-Legal",
-            "Право в сфере международной безопасности": "International Security Law",
-            "Публичное и частное право": "Public and Private Law",
-            "Уголовно-правовой": "Criminal-Legal",
-            "Судебная экспертиза": "Forensic Expertise",
-            "Криминалистические экспертизы": "Criminalistic Expertises",
-            "Инженерно-технические экспертизы": "Engineering and Technical Expertises",
-            "Судебная и прокурорская деятельность": "Judicial and Prosecutorial Activity",
-            "Судебная деятельность": "Judicial Activity",
-            "Уголовное право, уголовный процесс": "Criminal Law and Criminal Procedure",
-            "Юрист в сфере частного права": "Lawyer in Private Law",
-            "Юрист в органах государственной и муниципальной власти": "Lawyer in State and Municipal Authorities",
-            "Правовое обеспечение деятельности органов публичной власти, в том числе судов и органов прокуратуры": "Legal Support of Public Authorities including Courts and Prosecution",
-            "Политология": "Political Science",
-            "Прикладная политология": "Applied Political Science",
-            "Международные отношения": "International Relations",
-            "Международная безопасность": "International Security",
-            "Публичная политика и социальные науки": "Public Policy and Social Sciences",
-            "Стратегическое управление и администрирование в публичной политике": "Strategic Management and Administration in Public Policy",
-            "Мировая политика": "World Politics",
-            "Реклама": "Advertising",
-            "Реклама и связи с общественностью": "Advertising and Public Relations",
-            "Cвязи с общественностью в политике и бизнесе": "Public Relations in Politics and Business",
-            "Журналистика": "Journalism",
-            "Международная журналистика": "International Journalism",
-            "Медиакоммуникации": "Media Communications",
-            "Глобальные медиа и коммуникации": "Global Media and Communications",
-            "Социально-политические коммуникации в современном обществе": "Socio-Political Communications in Modern Society",
-            "Коммерческая реклама": "Commercial Advertising",
-            "Медиапродюсирование и медиапроизводство": "Media Producing and Media Production",
-            "Туризм и гостеприимство (на базе основного общего образования)": "Tourism and Hospitality (Basic Education)",
-            "Туроператорские и турагентские услуги": "Tour Operator and Travel Agency Services",
-            "Гостиничные услуги": "Hotel Services",
-            "Сервис": "Service",
-            "Экспертиза и оценка недвижимости": "Real Estate Assessment and Evaluation",
-            "Сервис-менеджмент в креативных и конгрессно-выставочных проектах рекреационных территорий": "Service Management in Creative and MICE Projects",
-            "Управление в креативной ресторанно-гастрономической индустрии рекреационных территорий": "Management in Creative Restaurant and Gastronomy Industry",
-            "Туризм": "Tourism",
-            "Технология и организация туроператорских и турагентских услуг": "Technology and Organization of Tour Operator and Travel Agency Services",
-            "Гостиничное дело": "Hotel Management",
-            "Гостиничная деятельность": "Hotel Activity",
-            "Туристский менеджмент": "Tourism Management",
-            "Международная гостиничная индустрия": "International Hotel Industry",
-            "Педагогическое образование (с двумя профилями подготовки)": "Teacher Education (with two profiles)",
-            "Изобразительное искусство и английский язык": "Fine Arts and English",
-            "Английский язык и немецкий язык": "English and German",
-            "Английский язык и дополнительное образование": "English and Extra Education",
-            "Русский язык и китайский язык": "Russian and Chinese",
-            "Русский язык и литература": "Russian and Literature",
-            "Испанский язык и английский язык": "Spanish and English",
-            "Математика и информатика": "Mathematics and Computer Science",
-            "Французский и английский языки": "French and English",
-            "Английский язык и педагогическая психология": "English and Educational Psychology",
-            "История и китайский язык": "History and Chinese",
-            "Информатика и английский язык": "Computer Science and English",
-            "История и обществознание": "History and Social Studies",
-            "Педагогическое образование": "Teacher Education",
-            "Филологическое образование": "Philological Education",
-            "Преподавание иностранных языков (английский язык)": "Teaching Foreign Languages (English)",
-            "Деятельностные образовательные траектории: иностранный язык и педагогическая психология": "Foreign Language and Educational Psychology",
-            "Лингвопедагогические модели обучения русскому языку как иностранному": "Linguopedagogical Models of Teaching Russian as Foreign",
-            "Лингвистика": "Linguistics",
-            "Теория и методика преподавания иностранных языков и культур (английский и испанский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (English/Spanish)",
-            "Теория и практика межкультурной коммуникации (в сфере энергетики) – английский и немецкий языки": "Theory and Practice of Intercultural Communication (Energy) - English/German",
-            "Теория и практика межкультурной коммуникации (в сфере рекламы и маркетинга) – английский и итальянский языки": "Theory and Practice of Intercultural Communication (Advertising/Marketing) - English/Italian",
-            "Теория и практика межкультурной коммуникации (в сфере рекламы и маркетинга) английский и испанский языки": "Theory and Practice of Intercultural Communication (Advertising/Marketing) English/Spanish",
-            "Теория и практика межкультурной коммуникации (в сфере цифровых технологий и искусственного интеллекта) – английский и испанский языки": "Theory and Practice of Intercultural Communication (Digital/AI) - English/Spanish",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и немецкий языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/German",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и итальянский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Italian",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и испанский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Spanish",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – английский и китайский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - English/Chinese",
-            "Теория и практика межкультурной коммуникации в сфере бизнеса – испанский и английский языки": "Theory and Practice of Intercultural Communication in Business - Spanish/English",
-            "Теория и практика межкультурной коммуникации в сфере бизнеса – французский и английский языки": "Theory and Practice of Intercultural Communication in Business - French/English",
-            "Теория и практика межкультурной коммуникации в сфере бизнеса – немецкий и английский языки": "Theory and Practice of Intercultural Communication in Business - German/English",
-            "Теория и методика преподавания иностранных языков и культур (английский и французский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (English/French)",
-            "Теория и практика межкультурной коммуникации (английский и испанский языки)": "Theory and Practice of Intercultural Communication (English/Spanish)",
-            "Теория и практика межкультурной коммуникации (английский и итальянский языки)": "Theory and Practice of Intercultural Communication (English/Italian)",
-            "Теория и практика межкультурной коммуникации (английский и немецкий языки)": "Theory and Practice of Intercultural Communication (English/German)",
-            "Теория и методика преподавания иностранных языков и культур (немецкий и английский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (German/English)",
-            "Теория и методика преподавания иностранных языков и культур (французский и английский языки)": "Theory and Methodology of Teaching Foreign Languages and Cultures (French/English)",
-            "Теория и практика межкультурной коммуникации (испанский и английский языки)": "Theory and Practice of Intercultural Communication (Spanish/English)",
-            "Теория и практика межкультурной коммуникации (немецкий и английский языки)": "Theory and Practice of Intercultural Communication (German/English)",
-            "Теория и практика межкультурной коммуникации (французский и английский языки)": "Theory and Practice of Intercultural Communication (French/English)",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – испанский и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - Spanish/English",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – немецкий и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - German/English",
-            "Теория, методика преподавания иностранных языков, межкультурная коммуникация – французский и английский языки": "Theory, Methodology of Teaching Foreign Languages, Intercultural Communication - French/English",
-            "Перевод и переводоведение (английский и французский языки)": "Translation and Translation Studies (English/French)",
-            "Перевод и переводоведение (английский и испанский языки)": "Translation and Translation Studies (English/Spanish)",
-            "Перевод и переводоведение (немецкий и английский языки)": "Translation and Translation Studies (German/English)",
-            "Перевод и переводоведение (фарси и английский языки)": "Translation and Translation Studies (Farsi/English)",
-            "Перевод и переводоведение (китайский и английский языки)": "Translation and Translation Studies (Chinese/English)",
-            "Перевод и переводоведение (арабский и английский языки)": "Translation and Translation Studies (Arabic/English)",
-            "Теория и практика межкультурной коммуникации (четырехъязычие: английский, немецкий, французский, испанский языки)": "Theory and Practice of Intercultural Communication (Four Languages: English, German, French, Spanish)",
-            "Перевод и переводоведение (английский и немецкий языки)": "Translation and Translation Studies (English/German)",
-            "Интеллектуальные системы в гуманитарной сфере": "Intellectual Systems in Humanities",
-            "Разработка и программирование интеллектуальных систем в гуманитарной сфере": "Development and Programming of Intellectual Systems in Humanities",
-            "Лингвистическое обеспечение межгосударственных отношений (арабский и английский языки)": "Linguistic Support of Interstate Relations (Arabic/English)",
-            "Лингвистическое обеспечение межгосударственных отношений (турецкий и английский языки)": "Linguistic Support of Interstate Relations (Turkish/English)",
-            "Специальный перевод (перевод в сфере туризма и экскурсионного дела) – английский и китайский языки": "Special Translation (Tourism and Excursions) - English/Chinese",
-            "Специальный перевод (перевод в нефтегазовой сфере) – английский и китайский языки": "Special Translation (Oil and Gas Sector) - English/Chinese",
-            "Теория перевода и межъязыковая коммуникация": "Translation Theory and Interlingual Communication",
-            "Лингвистика рекламы и нейромаркетинга": "Linguistics of Advertising and Neuromarketing",
-            "Лингвистика в сфере деловой и профессиональной коммуникации (германские и романские языки)»": "Linguistics in Business and Professional Communication (Germanic and Romance Languages)",
-            "Теория и практика аудиовизуального перевода": "Theory and Practice of Audiovisual Translation",
-            "Сопоставительное изучение языков и культур и инновационные стратегии речевого общения (романские и германские языки)": "Comparative Study of Languages and Cultures and Innovative Strategies of Speech Communication (Romance/Germanic)",
-            "Интеллектуальные системы в гуманитарной среде": "Intellectual Systems in Humanitarian Environment",
-            "Цифровые технологии и искусственный интеллект": "Digital Technologies and Artificial Intelligence",
-            "Делопроизводитель": "Clerk",
-            "Организация документооборота": "Document Flow Organization",
-            "История": "History",
-            "История международных отношений": "History of International Relations",
-            "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование": "North Caucasus in the Civilizational Space of Russia",
-            "Философия": "Philosophy",
-            "Философия управления и методология принятия решений в сфере креативных индустрий": "Philosophy of Management and Decision-Making Methodology in Creative Industries",
-            "Теология": "Theology",
-            "Государственно-конфессиональные отношения (с православным блоком дисциплин)": "State-Confessional Relations (with Orthodox Block)",
-            "Государственно-конфессиональные отношения (с исламским блоком дисциплин)": "State-Confessional Relations (with Islamic Block)",
-            "Государственно-конфессиональные отношения (с православным компонентом)": "State-Confessional Relations (with Orthodox Component)",
-            "Государственно-конфессиональные отношения (с исламским компонентом)": "State-Confessional Relations (with Islamic Component)",
-            "Рекреация и спортивно-оздоровительный туризм": "Recreation and Sports-Health Tourism",
-            "Рекреационно-оздоровительная деятельность": "Recreation and Health Activity",
-            "Социально-культурная деятельность": "Social and Cultural Activity",
-            "Менеджмент социально-культурной деятельность": "Management of Social and Cultural Activity",
-            "Литературное творчество": "Literary Creation",
-            "Литературный работник, переводчик художественной литературы": "Literary Worker, Translator of Fiction",
-            "Дизайн": "Design",
-            "Коммуникативный дизайн": "Communicative Design",
-            "Дизайн среды": "Environmental Design",
-            "Декоративно-прикладное искусство и народные промыслы": "Decorative and Applied Arts and Folk Crafts",
-            "Арт-технологии в декоративно-прикладном искусстве": "Art Technologies in Decorative and Applied Arts",
-            "Востоковедение и африканистика": "Asian and African Studies",
-            "История стран Азии и Африки": "History of Asian and African Countries",
-            "-": "-"
-        };
-
-        const translateText = (text) => {
-            if (currentLang.value === 'ru') return text;
-            return specialtyTranslations[text] || text;
-        };
-
         const studentQuestions = {
             ru: [
                 "Руководитель образовательной программы помогает мне с адаптацией к образовательному процессу в университете; он(она) дает понятные и полезные ответы на организационные вопросы.",
@@ -2568,7 +2668,7 @@ createApp({
 
         const scoreLabels = computed(() => scoreLabelsMap[currentLang.value]);
 
-        // Плавный скролл-листенер для виджета
+        // Плавное скрытие виджета при прокрутке страницы вниз
         const setupScrollListener = () => {
             const panel = document.getElementById('floating-panel');
             if (!panel) return;
@@ -2589,13 +2689,13 @@ createApp({
                 const response = await fetch('/api/specialties');
                 const rawData = await response.json();
                 
-                // Переводим направления в зависимости от выбранного языка при инициализации
+                // Переводим направления и ФИО руководителей на лету!
                 specialties.value = rawData.map(s => ({
                     ...s,
-                    name: translateText(s.name),
-                    profile: translateText(s.profile),
-                    // ИСПРАВЛЕНО: добавили перевод руководителя!
-                    supervisor_name: window.translateSupervisor(s.supervisor_name, currentLang.value)
+                    name: window.translateSpecialtyText(s.name, currentLang.value),
+                    profile: window.translateSpecialtyText(s.profile, currentLang.value),
+                    supervisor_name: window.translateSupervisor(s.supervisor_name, currentLang.value),
+                    mentor_name: window.translateSupervisor(s.mentor_name, currentLang.value)
                 }));
             } catch (error) {
                 console.error("Ошибка при получении списка направлений:", error);
@@ -2614,6 +2714,7 @@ createApp({
 
         const selectSpecialty = (spec) => {
             selectedSpec.value = spec;
+            // Студенты всегда оценивают наставника (mentor_name)
             searchQuery.value = `${spec.code} ${spec.name}`;
             showDropdown.value = false;
         };
@@ -2656,13 +2757,14 @@ createApp({
             }
         };
 
+        // Сброс формы анкеты для повторного голосования
         const resetForm = () => {
             selectedSpec.value = null;
             searchQuery.value = '';
             answers.value = { q1: null, q2: null, q3: null, q4: null, q5: null };
             submitted.value = false;
         };
-        
+
         return {
             currentLang,
             theme,
@@ -2699,7 +2801,7 @@ createApp({
 
         const authenticated = ref(false);
         const passwordInput = ref('');
-        const showPassword = ref(false); // Для переключения видимости пароля
+        const showPassword = ref(false); 
         const authLoading = ref(false);
         const authError = ref('');
 
@@ -2714,6 +2816,9 @@ createApp({
         const selectedSpec = ref(null);
         const loading = ref(false);
         const submitted = ref(false);
+
+        // ИСПРАВЛЕНО: стейт выбранной оцениваемой роли для ВШУ
+        const selectedRoleType = ref(''); // 'admin' или 'nast'
 
         const nastAnswers = ref([null, null, null, null]); 
         const adminAnswers = ref([null, null, null]);      
@@ -2765,6 +2870,13 @@ createApp({
             selectedEvaluator.value = '';
         });
 
+        // Сброс ответов и роли при смене специальности
+        watch(selectedSpec, () => {
+            selectedRoleType.value = '';
+            nastAnswers.value = [null, null, null, null];
+            adminAnswers.value = [null, null, null];
+        });
+
         const verifyPassword = async () => {
             const trimmedPass = passwordInput.value.trim();
             if (!trimmedPass) return;
@@ -2781,7 +2893,6 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Сохраняем сессию на 24 часа в localStorage
                     window.authSession.save('expert', trimmedPass);
                     sessionStorage.setItem('expert_password', trimmedPass);
                     authenticated.value = true;
@@ -2796,11 +2907,9 @@ createApp({
             }
         };
 
-        // Фоновая проверка сессии при монтировании страницы
         const checkSavedSession = async () => {
             const savedPassword = window.authSession.get('expert');
             if (savedPassword) {
-                // Если пароль сохранен, проверяем его валидность на бэкенде в фоне
                 try {
                     const response = await fetch('/api/auth/verify', {
                         method: 'POST',
@@ -2813,7 +2922,7 @@ createApp({
                         authenticated.value = true;
                         await loadInitialData();
                     } else {
-                        window.authSession.clear('expert'); // Если пароль на сервере поменялся, сбрасываем
+                        window.authSession.clear('expert');
                     }
                 } catch (e) {
                     console.error("Ошибка фоновой проверки сессии:", e);
@@ -2849,15 +2958,58 @@ createApp({
             showDropdown.value = false;
         };
 
+        // ИСПРАВЛЕНО: Умная валидация полей в зависимости от разделения ОПОП ВШУ
         const isFormValid = computed(() => {
-            const nastFilled = nastAnswers.value.every(v => v !== null);
-            const adminFilled = adminAnswers.value.every(v => v !== null);
-            return selectedSpec.value && selectedEvaluator.value && nastFilled && adminFilled;
+            if (!selectedSpec.value || !selectedEvaluator.value) return false;
+            
+            if (selectedSpec.value.has_split_roles) {
+                if (selectedRoleType.value === 'nast') {
+                    return nastAnswers.value.every(v => v !== null);
+                } else if (selectedRoleType.value === 'admin') {
+                    return adminAnswers.value.every(v => v !== null);
+                }
+                return false;
+            } else {
+                const nastFilled = nastAnswers.value.every(v => v !== null);
+                const adminFilled = adminAnswers.value.every(v => v !== null);
+                return nastFilled && adminFilled;
+            }
         });
 
+        // ИСПРАВЛЕНО: Формирование частичной отправки результатов в зависимости от разделения ОПОП
         const submitEvaluation = async () => {
             if (!isFormValid.value) return;
             loading.value = true;
+            
+            const payload = {
+                specialty_id: selectedSpec.value.id,
+                evaluator_name: selectedEvaluator.value,
+                role_type: roleType.value,
+                nast_q1: null, nast_q2: null, nast_q3: null, nast_q4: null,
+                admin_q1: null, admin_q2: null, admin_q3: null
+            };
+
+            if (selectedSpec.value.has_split_roles) {
+                if (selectedRoleType.value === 'nast') {
+                    payload.nast_q1 = nastAnswers.value[0];
+                    payload.nast_q2 = nastAnswers.value[1];
+                    payload.nast_q3 = nastAnswers.value[2];
+                    payload.nast_q4 = nastAnswers.value[3];
+                } else if (selectedRoleType.value === 'admin') {
+                    payload.admin_q1 = adminAnswers.value[0];
+                    payload.admin_q2 = adminAnswers.value[1];
+                    payload.admin_q3 = adminAnswers.value[2];
+                }
+            } else {
+                payload.nast_q1 = nastAnswers.value[0];
+                payload.nast_q2 = nastAnswers.value[1];
+                payload.nast_q3 = nastAnswers.value[2];
+                payload.nast_q4 = nastAnswers.value[3];
+                payload.admin_q1 = adminAnswers.value[0];
+                payload.admin_q2 = adminAnswers.value[1];
+                payload.admin_q3 = adminAnswers.value[2];
+            }
+
             try {
                 const response = await fetch('/api/vote/expert', {
                     method: 'POST',
@@ -2865,18 +3017,7 @@ createApp({
                         'Content-Type': 'application/json',
                         'X-Password': sessionStorage.getItem('expert_password')
                     },
-                    body: JSON.stringify({
-                        specialty_id: selectedSpec.value.id,
-                        evaluator_name: selectedEvaluator.value,
-                        role_type: roleType.value,
-                        nast_q1: nastAnswers.value[0],
-                        nast_q2: nastAnswers.value[1],
-                        nast_q3: nastAnswers.value[2],
-                        nast_q4: nastAnswers.value[3],
-                        admin_q1: adminAnswers.value[0],
-                        admin_q2: adminAnswers.value[1],
-                        admin_q3: adminAnswers.value[2]
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (response.status === 401) {
@@ -2886,10 +3027,8 @@ createApp({
 
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Плавный скролл наверх
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     
-                    // Показываем галочку успеха через 400мс
                     setTimeout(() => {
                         submitted.value = true;
                     }, 400);
@@ -2906,6 +3045,7 @@ createApp({
 
         const resetForm = () => {
             selectedSpec.value = null;
+            selectedRoleType.value = '';
             searchQuery.value = '';
             nastAnswers.value = [null, null, null, null];
             adminAnswers.value = [null, null, null];
@@ -2938,6 +3078,7 @@ createApp({
             filteredSpecialties,
             selectSpecialty,
             selectedSpec,
+            selectedRoleType, // Экспортируем новый стейт во фронтенд!
             currentQuestions,
             nastAnswers,
             adminAnswers,

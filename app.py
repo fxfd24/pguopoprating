@@ -670,8 +670,26 @@ def export_csv(db: sqlite3.Connection = Depends(get_db), x_password: str = Heade
     verify_admin_auth(x_password)
     ratings = calculate_ratings_list(db)
     
+    # Хелперы для корректного форматирования под Excel (с русской локалью)
+    def to_excel_text(val):
+        # Оборачиваем коды в формулу = "значение", чтобы Excel читал их строго как текст 
+        # и не превращал коды вроде 07.02.01 в даты (7 февраля)
+        if val is None:
+            return ""
+        return f'="{val}"'
+
+    def to_excel_float(val):
+        if val is None:
+            return ""
+        if isinstance(val, (int, float)):
+            # Заменяем точку на запятую, так как при разделителе ";" Excel в русской локали 
+            # ожидает запятую в качестве десятичного разделителя.
+            # Это убирает превращение 1.25 -> янв.25 и 1.01 -> 45658,00
+            return str(val).replace('.', ',')
+        return val
+
     output = StringIO()
-    output.write('\ufeff')
+    output.write('\ufeff')  # BOM для корректной кодировки UTF-8 в Excel
     
     writer = csv.writer(output, delimiter=';')
     writer.writerow([
@@ -682,9 +700,17 @@ def export_csv(db: sqlite3.Connection = Depends(get_db), x_password: str = Heade
     
     for r in ratings:
         writer.writerow([
-            r["code"], r["spec_name"], r["profile"], r["institute"],
-            r["supervisor_name"], r["voters_count"], r["k_sroki"], r["student_avg"],
-            r["r_a"], r["r_b"], r["r_v"]
+            to_excel_text(r["code"]), 
+            r["spec_name"], 
+            r["profile"], 
+            r["institute"],
+            r["supervisor_name"], 
+            r["voters_count"], 
+            r["k_sroki"], 
+            to_excel_float(r["student_avg"]),
+            to_excel_float(r["r_a"]), 
+            to_excel_float(r["r_b"]), 
+            to_excel_float(r["r_v"])
         ])
         
     output.seek(0)
