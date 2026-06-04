@@ -7,7 +7,7 @@ createApp({
 
         const authenticated = ref(false);
         const passwordInput = ref('');
-        const showPassword = ref(false); // Для переключения видимости пароля
+        const showPassword = ref(false); 
         const authLoading = ref(false);
         const authError = ref('');
 
@@ -22,6 +22,9 @@ createApp({
         const selectedSpec = ref(null);
         const loading = ref(false);
         const submitted = ref(false);
+
+        // ИСПРАВЛЕНО: стейт выбранной оцениваемой роли для ВШУ
+        const selectedRoleType = ref(''); // 'admin' или 'nast'
 
         const nastAnswers = ref([null, null, null, null]); 
         const adminAnswers = ref([null, null, null]);      
@@ -73,6 +76,13 @@ createApp({
             selectedEvaluator.value = '';
         });
 
+        // Сброс ответов и роли при смене специальности
+        watch(selectedSpec, () => {
+            selectedRoleType.value = '';
+            nastAnswers.value = [null, null, null, null];
+            adminAnswers.value = [null, null, null];
+        });
+
         const verifyPassword = async () => {
             const trimmedPass = passwordInput.value.trim();
             if (!trimmedPass) return;
@@ -89,7 +99,6 @@ createApp({
                 });
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Сохраняем сессию на 24 часа в localStorage
                     window.authSession.save('expert', trimmedPass);
                     sessionStorage.setItem('expert_password', trimmedPass);
                     authenticated.value = true;
@@ -104,11 +113,9 @@ createApp({
             }
         };
 
-        // Фоновая проверка сессии при монтировании страницы
         const checkSavedSession = async () => {
             const savedPassword = window.authSession.get('expert');
             if (savedPassword) {
-                // Если пароль сохранен, проверяем его валидность на бэкенде в фоне
                 try {
                     const response = await fetch('/api/auth/verify', {
                         method: 'POST',
@@ -121,7 +128,7 @@ createApp({
                         authenticated.value = true;
                         await loadInitialData();
                     } else {
-                        window.authSession.clear('expert'); // Если пароль на сервере поменялся, сбрасываем
+                        window.authSession.clear('expert');
                     }
                 } catch (e) {
                     console.error("Ошибка фоновой проверки сессии:", e);
@@ -157,15 +164,58 @@ createApp({
             showDropdown.value = false;
         };
 
+        // ИСПРАВЛЕНО: Умная валидация полей в зависимости от разделения ОПОП ВШУ
         const isFormValid = computed(() => {
-            const nastFilled = nastAnswers.value.every(v => v !== null);
-            const adminFilled = adminAnswers.value.every(v => v !== null);
-            return selectedSpec.value && selectedEvaluator.value && nastFilled && adminFilled;
+            if (!selectedSpec.value || !selectedEvaluator.value) return false;
+            
+            if (selectedSpec.value.has_split_roles) {
+                if (selectedRoleType.value === 'nast') {
+                    return nastAnswers.value.every(v => v !== null);
+                } else if (selectedRoleType.value === 'admin') {
+                    return adminAnswers.value.every(v => v !== null);
+                }
+                return false;
+            } else {
+                const nastFilled = nastAnswers.value.every(v => v !== null);
+                const adminFilled = adminAnswers.value.every(v => v !== null);
+                return nastFilled && adminFilled;
+            }
         });
 
+        // ИСПРАВЛЕНО: Формирование частичной отправки результатов в зависимости от разделения ОПОП
         const submitEvaluation = async () => {
             if (!isFormValid.value) return;
             loading.value = true;
+            
+            const payload = {
+                specialty_id: selectedSpec.value.id,
+                evaluator_name: selectedEvaluator.value,
+                role_type: roleType.value,
+                nast_q1: null, nast_q2: null, nast_q3: null, nast_q4: null,
+                admin_q1: null, admin_q2: null, admin_q3: null
+            };
+
+            if (selectedSpec.value.has_split_roles) {
+                if (selectedRoleType.value === 'nast') {
+                    payload.nast_q1 = nastAnswers.value[0];
+                    payload.nast_q2 = nastAnswers.value[1];
+                    payload.nast_q3 = nastAnswers.value[2];
+                    payload.nast_q4 = nastAnswers.value[3];
+                } else if (selectedRoleType.value === 'admin') {
+                    payload.admin_q1 = adminAnswers.value[0];
+                    payload.admin_q2 = adminAnswers.value[1];
+                    payload.admin_q3 = adminAnswers.value[2];
+                }
+            } else {
+                payload.nast_q1 = nastAnswers.value[0];
+                payload.nast_q2 = nastAnswers.value[1];
+                payload.nast_q3 = nastAnswers.value[2];
+                payload.nast_q4 = nastAnswers.value[3];
+                payload.admin_q1 = adminAnswers.value[0];
+                payload.admin_q2 = adminAnswers.value[1];
+                payload.admin_q3 = adminAnswers.value[2];
+            }
+
             try {
                 const response = await fetch('/api/vote/expert', {
                     method: 'POST',
@@ -173,18 +223,7 @@ createApp({
                         'Content-Type': 'application/json',
                         'X-Password': sessionStorage.getItem('expert_password')
                     },
-                    body: JSON.stringify({
-                        specialty_id: selectedSpec.value.id,
-                        evaluator_name: selectedEvaluator.value,
-                        role_type: roleType.value,
-                        nast_q1: nastAnswers.value[0],
-                        nast_q2: nastAnswers.value[1],
-                        nast_q3: nastAnswers.value[2],
-                        nast_q4: nastAnswers.value[3],
-                        admin_q1: adminAnswers.value[0],
-                        admin_q2: adminAnswers.value[1],
-                        admin_q3: adminAnswers.value[2]
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (response.status === 401) {
@@ -194,10 +233,8 @@ createApp({
 
                 const res = await response.json();
                 if (res.status === 'success') {
-                    // Плавный скролл наверх
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                     
-                    // Показываем галочку успеха через 400мс
                     setTimeout(() => {
                         submitted.value = true;
                     }, 400);
@@ -214,6 +251,7 @@ createApp({
 
         const resetForm = () => {
             selectedSpec.value = null;
+            selectedRoleType.value = '';
             searchQuery.value = '';
             nastAnswers.value = [null, null, null, null];
             adminAnswers.value = [null, null, null];
@@ -246,6 +284,7 @@ createApp({
             filteredSpecialties,
             selectSpecialty,
             selectedSpec,
+            selectedRoleType, // Экспортируем новый стейт во фронтенд!
             currentQuestions,
             nastAnswers,
             adminAnswers,

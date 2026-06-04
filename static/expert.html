@@ -7,7 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <link rel="icon" href="https://pgu.ru/images/pgu/logo.png">
     <script src="/assets/js/shared.js"></script>
 </head>
 <body class="py-8 px-4">
@@ -131,7 +131,7 @@
                                class="w-full pl-4 pr-12 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                         <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
 
-                        <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и руководителя направления -->
+                        <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и наставников -->
                         <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-48 overflow-y-auto dropdown-menu">
                             <div v-for="spec in filteredSpecialties" 
                                  :key="spec.id" 
@@ -140,7 +140,7 @@
                                 <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                                 <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">{{ spec.profile }}</div>
                                 <div class="text-xs text-secondary mt-0.5">
-                                    Руководитель: <span class="font-bold text-main">{{ spec.supervisor_name }}</span>
+                                    Руководитель: <span class="font-bold text-main">{{ spec.has_split_roles ? (spec.supervisor_name + ' / ' + spec.mentor_name) : spec.supervisor_name }}</span>
                                 </div>
                             </div>
                         </div>
@@ -154,16 +154,44 @@
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-400 uppercase">Оцениваемый руководитель</div>
-                            <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
+                            <!-- ИСПРАВЛЕНО: Показываем ФИО в зависимости от выбора роли для разделенных ОПОП ВШУ -->
+                            <div class="font-bold text-main">
+                                <span v-if="selectedSpec.has_split_roles">
+                                    <span v-if="selectedRoleType === 'admin'">{{ selectedSpec.supervisor_name }}</span>
+                                    <span v-else-if="selectedRoleType === 'nast'">{{ selectedSpec.mentor_name }}</span>
+                                    <span v-else class="text-yellow-600 font-semibold text-xs"><i class="fa-solid fa-circle-question mr-1"></i>{{ t.selectRolePlaceholder }}</span>
+                                </span>
+                                <span v-else>
+                                    {{ selectedSpec.supervisor_name }}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ================= ШАГ 4: ВЫБОР ОЦЕНИВАЕМОЙ РОЛИ (ТОЛЬКО ДЛЯ РАЗДЕЛЕННЫХ ВШУ) ================= -->
+                <div v-if="selectedSpec && selectedSpec.has_split_roles" class="mb-8">
+                    <label class="block text-sm font-bold mb-2 text-main">{{ t.selectRoleToEvaluate }}</label>
+                    <div class="grid grid-cols-2 gap-3 animate-entrance">
+                        <button @click="selectedRoleType = 'admin'" 
+                                :class="[selectedRoleType === 'admin' ? 'btn-active' : 'btn-inactive']"
+                                class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                            {{ t.adminRoleLabel }}
+                        </button>
+                        <button @click="selectedRoleType = 'nast'" 
+                                :class="[selectedRoleType === 'nast' ? 'btn-active' : 'btn-inactive']"
+                                class="py-3 rounded-xl text-center text-sm font-semibold transition-all">
+                            {{ t.mentorRoleLabel }}
+                        </button>
+                    </div>
+                </div>
+
                 <!-- ================= БЛОКИ ОЦЕНКИ ================= -->
-                <div v-if="selectedSpec" class="space-y-8 mt-8">
+                <!-- Показываем Блок вопросов только если ОПОП не разделен ИЛИ выбрана конкретная роль -->
+                <div v-if="selectedSpec && (!selectedSpec.has_split_roles || selectedRoleType)" class="space-y-8 mt-8">
                     
-                    <!-- БЛОК А: НАСТАВНИК -->
-                    <div class="border-t border-gray-200/50 pt-6">
+                    <!-- БЛОК А: НАСТАВНИК (скрывается если оцениваем роль Администратора) -->
+                    <div v-if="!selectedSpec.has_split_roles || selectedRoleType === 'nast'" class="border-t border-gray-200/50 pt-6 animate-entrance">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
                             <span class="btn-inactive px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 1</span>
                             Деятельность в роли Наставника ОПОП
@@ -185,8 +213,8 @@
                         </div>
                     </div>
 
-                    <!-- БЛОК Б: АДМИНИСТРАТОР -->
-                    <div class="border-t border-gray-200/50 pt-8">
+                    <!-- БЛОК Б: АДМИНИСТРАТОР (скрывается если оцениваем роль Наставника) -->
+                    <div v-if="!selectedSpec.has_split_roles || selectedRoleType === 'admin'" class="border-t border-gray-200/50 pt-8 animate-entrance">
                         <h2 class="text-lg font-bold mb-4 inline-flex items-center text-main">
                             <span class="btn-inactive px-2.5 py-1 rounded-lg text-xs font-bold mr-2">Блок 2</span>
                             Деятельность в роли Администратора ОПОП

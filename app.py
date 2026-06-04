@@ -31,13 +31,14 @@ class ExpertVote(BaseModel):
     specialty_id: int
     evaluator_name: str
     role_type: str
-    nast_q1: int
-    nast_q2: int
-    nast_q3: int
-    nast_q4: int
-    admin_q1: int
-    admin_q2: int
-    admin_q3: int
+    # Оценки стали необязательными (Optional) для раздельной отправки
+    nast_q1: Optional[int] = None
+    nast_q2: Optional[int] = None
+    nast_q3: Optional[int] = None
+    nast_q4: Optional[int] = None
+    admin_q1: Optional[int] = None
+    admin_q2: Optional[int] = None
+    admin_q3: Optional[int] = None
 
 class AdminVote(BaseModel):
     specialty_id: int
@@ -74,10 +75,6 @@ def get_db():
 
 # ---- ИНИЦИАЛИЗАЦИЯ И НАПОЛНЕНИЕ БД ----
 def init_db():
-    if os.path.exists(DB_FILE):
-        return
-
-    print("Создание и наполнение базы данных...")
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
 
@@ -94,9 +91,18 @@ def init_db():
         name TEXT,
         profile TEXT,
         supervisor_id INTEGER,
+        mentor_id INTEGER, -- Поле наставника для ОПОП ВШУ с разделенными ролями
         institute TEXT,
-        FOREIGN KEY(supervisor_id) REFERENCES supervisors(id)
+        FOREIGN KEY(supervisor_id) REFERENCES supervisors(id),
+        FOREIGN KEY(mentor_id) REFERENCES supervisors(id)
     )""")
+
+    # МИГРАЦИЯ: Если БД существовала, но колонки mentor_id нет - добавляем её на лету
+    try:
+        cursor.execute("ALTER TABLE specialties ADD COLUMN mentor_id INTEGER REFERENCES supervisors(id)")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass # Колонка уже добавлена
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS deans (
@@ -146,7 +152,6 @@ def init_db():
     for h in hods_list:
         cursor.execute("INSERT OR IGNORE INTO hods (name) VALUES (?)", (h,))
 
-    # Наполнение Специальностей и Руководителей
     # Наполнение Специальностей и Руководителей (с автоматическим исключением дубликатов)
     raw_specialties = [
         ("10.02.05", "Обеспечение информационной безопасности автоматизированных систем", "-", "Воробьев Г.А.", "ИРГЯИГТ"),
@@ -157,7 +162,7 @@ def init_db():
         ("40.02.03", "Право и судебное администрирование", "-", "Фалеева А.Ю.", "ЮИ"),
         ("43.02.14", "Гостиничное дело", "-", "Боднева Н.А.", "ИИЯМТ"),
         ("54.01.20", "Графический дизайнер", "-", "Дмитриенко Б.Ч.", "ВШДиА"),
-        ("07.02.01", "Архитектура", "Архитектура", "Голубич С.А", "ВШДиА"),
+        ("07.02.01", "Архитектура", "Архитектурное проектирование", "Голубич С.А", "ВШДиА"),
         ("07.03.01", "Архитектура", "Архитектурное проектирование", "Голубич С.А", "ВШДиА"),
         ("07.04.03", "Дизайн архитектурной среды", "Дизайн архитектурной среды", "Рубец Е.А.", "ВШДиА"),
         ("08.03.01", "Строительство", "Экспертиза недвижимости и реновация городских и курортных территорий", "Малых М.С.", "ВШДиА"),
@@ -287,7 +292,7 @@ def init_db():
         ("45.04.04", "Интеллектуальные системы в гуманитарной среде", "Цифровые технологии и искусственный интеллект", "Тимченко О.В.", "ИИЯМТ"),
         ("46.01.03", "Делопроизводитель", "Организация документооборота", "Гетманова Е.С.", "ВШУ"),
         ("46.03.01", "История", "История международных отношений", "Николаенко Н.Д.", "ВШУ"),
-        ("46.04.01", "История", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI wв.): исторический анализ и политическое прогнозирование", "Ермаков В.П.", "ВШУ"),
+        ("46.04.01", "История", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование", "Ермаков В.П.", "ВШУ"),
         ("47.04.01", "Философия", "Философия управления и методология принятия решений в сфере креативных индустрий", "Суховская Д.Н.", "ВШУ"),
         ("48.03.01", "Теология", "Государственно-конфессиональные отношения (с православным блоком дисциплин)", "Осипов С.К.", "ВШУ"),
         ("48.03.01", "Теология", "Государственно-конфессиональные отношения (с исламским блоком дисциплин)", "Осипов С.К.", "ВШУ"),
@@ -303,14 +308,12 @@ def init_db():
         ("58.03.01", "Востоковедение и африканистика", "История стран Азии и Африки", "Николаенко Н.Д.", "ВШУ")
     ]
 
-    # ИСПРАВЛЕНО: Добавлен набор для строгой фильтрации и дедупликации ОПОП перед записью в БД
     seen_specialties = set()
 
     for code, name, profile, sup_name, inst in raw_specialties:
-        # Уникальный ключ для фильтрации дубликатов
         unique_key = (code, name, profile, sup_name)
         if unique_key in seen_specialties:
-            continue  # Пропускаем, если такая запись уже обработана
+            continue  
         seen_specialties.add(unique_key)
 
         cursor.execute("INSERT OR IGNORE INTO supervisors (name) VALUES (?)", (sup_name,))
@@ -322,9 +325,29 @@ def init_db():
             VALUES (?, ?, ?, ?, ?)
         """, (code, name, profile, sup_id, inst))
 
+    # СИСТЕМНАЯ МИГРАЦИЯ ДЛЯ ВШУ (Разделение ролей наставников для строк 16, 17, 22)
+    dual_roles_setup = [
+        ("46.03.01", "История международных отношений", "Линец С.И."),
+        ("46.04.01", "Северный Кавказ в цивилизационном пространстве России (XVIII-XXI вв.): исторический анализ и политическое прогнозирование", "Линец С.И."),
+        ("58.03.01", "История стран Азии и Африки", "Каспаров К.В.")
+    ]
+
+    for code, profile, mentor_name in dual_roles_setup:
+        # Убедимся, что наставник добавлен в supervisors
+        cursor.execute("INSERT OR IGNORE INTO supervisors (name) VALUES (?)", (mentor_name,))
+        cursor.execute("SELECT id FROM supervisors WHERE name = ?", (mentor_name,))
+        m_id = cursor.fetchone()[0]
+
+        # Обновляем mentor_id у конкретных специальностей ВШУ
+        cursor.execute("""
+            UPDATE specialties 
+            SET mentor_id = ? 
+            WHERE code = ? AND profile = ? AND institute = 'ВШУ'
+        """, (m_id, code, profile))
+
     conn.commit()
     conn.close()
-    print("База данных создана и наполнена успешно!")
+    print("База данных создана, миграции выполнены!")
 
 init_db()
 
@@ -332,9 +355,13 @@ init_db()
 def get_specialties(db: sqlite3.Connection = Depends(get_db)):
     cursor = db.cursor()
     cursor.execute("""
-        SELECT s.id, s.code, s.name, s.profile, s.institute, sup.name as supervisor_name
+        SELECT s.id, s.code, s.name, s.profile, s.institute, 
+               sup.name as supervisor_name,
+               ment.name as mentor_name,
+               CASE WHEN s.mentor_id IS NOT NULL THEN 1 ELSE 0 END as has_split_roles
         FROM specialties s
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
         ORDER BY s.code
     """)
     rows = cursor.fetchall()
@@ -363,26 +390,51 @@ def vote_student(data: StudentVote, db: sqlite3.Connection = Depends(get_db)):
 
 @app.post("/api/vote/expert")
 def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
-    # Защита от прямого POST-запроса в обход модального окна
     verify_expert_auth(x_password)
     
     cursor = db.cursor()
+    
+    # ПРОВЕРКА И ЧАСТИЧНОЕ ОБНОВЛЕНИЕ СТРОКИ (UPDATE) ДЛЯ ИСКЛЮЧЕНИЯ ЗАТИРАНИЯ ГЛАСОВ ПРИ РАЗДЕЛЕНИИ
     cursor.execute("""
-        DELETE FROM expert_votes 
+        SELECT id, nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3
+        FROM expert_votes
         WHERE specialty_id = ? AND evaluator_name = ? AND role_type = ?
     """, (data.specialty_id, data.evaluator_name, data.role_type))
     
-    cursor.execute("""
-        INSERT INTO expert_votes (
-            specialty_id, evaluator_name, role_type, 
-            nast_q1, nast_q2, nast_q3, nast_q4,
-            admin_q1, admin_q2, admin_q3
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        data.specialty_id, data.evaluator_name, data.role_type,
-        data.nast_q1, data.nast_q2, data.nast_q3, data.nast_q4,
-        data.admin_q1, data.admin_q2, data.admin_q3
-    ))
+    row = cursor.fetchone()
+    
+    if row:
+        vote_id = row[0]
+        # Если пришедшая оценка None, сохраняем старую оценку из базы данных
+        nast_q1 = data.nast_q1 if data.nast_q1 is not None else row[1]
+        nast_q2 = data.nast_q2 if data.nast_q2 is not None else row[2]
+        nast_q3 = data.nast_q3 if data.nast_q3 is not None else row[3]
+        nast_q4 = data.nast_q4 if data.nast_q4 is not None else row[4]
+        
+        admin_q1 = data.admin_q1 if data.admin_q1 is not None else row[5]
+        admin_q2 = data.admin_q2 if data.admin_q2 is not None else row[6]
+        admin_q3 = data.admin_q3 if data.admin_q3 is not None else row[7]
+        
+        cursor.execute("""
+            UPDATE expert_votes
+            SET nast_q1 = ?, nast_q2 = ?, nast_q3 = ?, nast_q4 = ?,
+                admin_q1 = ?, admin_q2 = ?, admin_q3 = ?
+            WHERE id = ?
+        """, (nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3, vote_id))
+    else:
+        # Записи нет -> сохраняем новую запись
+        cursor.execute("""
+            INSERT INTO expert_votes (
+                specialty_id, evaluator_name, role_type, 
+                nast_q1, nast_q2, nast_q3, nast_q4,
+                admin_q1, admin_q2, admin_q3
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data.specialty_id, data.evaluator_name, data.role_type,
+            data.nast_q1, data.nast_q2, data.nast_q3, data.nast_q4,
+            data.admin_q1, data.admin_q2, data.admin_q3
+        ))
+        
     db.commit()
     return {"status": "success"}
 
@@ -414,9 +466,12 @@ def calculate_ratings_list(db: sqlite3.Connection):
     cursor = db.cursor()
     
     cursor.execute("""
-        SELECT s.id, s.code, s.name as spec_name, s.profile, s.institute, sup.name as supervisor_name
+        SELECT s.id, s.code, s.name as spec_name, s.profile, s.institute, 
+               sup.name as supervisor_name,
+               ment.name as mentor_name
         FROM specialties s
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
     """)
     specs = cursor.fetchall()
 
@@ -471,13 +526,19 @@ def calculate_ratings_list(db: sqlite3.Connection):
         z_total = (z_nast + z_admin) / 2.0
         r_a = (0.35 * k_sroki) + (0.25 * d_total) + (0.20 * z_total) + (0.20 * s_stud)
 
+        # Вывод объединенных имен ОПОП в случае разделения
+        if spec["mentor_name"] and spec["mentor_name"] != spec["supervisor_name"]:
+            display_name = f'{spec["supervisor_name"]} (Админ) / {spec["mentor_name"]} (Наст)'
+        else:
+            display_name = spec["supervisor_name"]
+
         results.append({
             "id": sid,
             "code": spec["code"],
             "spec_name": spec["spec_name"],
             "profile": spec["profile"],
             "institute": spec["institute"],
-            "supervisor_name": spec["supervisor_name"],
+            "supervisor_name": display_name,
             "voters_count": s_count,
             "k_sroki": k_sroki,
             "student_avg": round(s_stud, 2),
@@ -597,7 +658,7 @@ def get_admin_stats(db: sqlite3.Connection = Depends(get_db)):
             "hods_voted": total_hods,
             "hods_today": today_hods,
             "hods_yesterday_curve": hods_yesterday_curve,
-            "hods_today_curve": hods_today_curve,
+            "hods_today_curve": today_hods,
         },
         "inst_today": inst_today,
         "ratings": ratings

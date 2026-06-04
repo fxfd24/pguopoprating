@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Встроенный SVG-Favicon в виде шапочки 🎓 (убирает 404 ошибку из консоли) -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+    <link rel="icon" href="https://pgu.ru/images/pgu/logo.png">
     
     <script src="/assets/js/shared.js"></script>
 </head>
@@ -51,7 +51,6 @@
             <h2 class="text-2xl font-bold mb-2 text-main">{{ t.submittedTitle }}</h2>
             <p class="mb-6 text-secondary">{{ t.submittedDesc }}</p>
             
-            <!-- ИСПРАВЛЕНО: Заменили переход на главную реактивной кнопкой сброса -->
             <button @click="resetForm" class="bg-black dark:bg-white text-white dark:text-black px-6 py-2.5 rounded-xl font-medium shadow-lg transition-all focus:outline-none">
                 {{ t.retakeBtn }}
             </button>
@@ -75,7 +74,7 @@
                            class="w-full pl-4 pr-12 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                     <i class="fa-solid fa-magnifying-glass absolute right-4 top-3.5 text-gray-400"></i>
                     
-                    <!-- ИСПРАВЛЕНО: в выпадающие строки добавлен вывод профиля и руководителя направления -->
+                    <!-- ИСПРАВЛЕНО: Выпадающее меню выводит Наставника в случае разделенных ОПОП -->
                     <div v-if="showDropdown && filteredSpecialties.length > 0" class="absolute z-10 w-full mt-1 rounded-xl shadow-xl max-h-60 overflow-y-auto dropdown-menu">
                         <div v-for="spec in filteredSpecialties" 
                              :key="spec.id" 
@@ -84,13 +83,13 @@
                             <div class="font-bold text-main">{{ spec.code }} {{ spec.name }}</div>
                             <div class="text-xs text-secondary mt-1" v-if="spec.profile !== '-'">{{ spec.profile }}</div>
                             <div class="text-xs text-secondary mt-0.5">
-                                {{ t.supervisorLabel }}: <span class="font-bold text-main">{{ spec.supervisor_name }}</span>
+                                {{ t.supervisorLabel }}: <span class="font-bold text-main">{{ spec.has_split_roles ? spec.mentor_name : spec.supervisor_name }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Карточка выбранной специальности -->
+                <!-- Карточка выбранной специальности (заменена на info-block) -->
                 <div v-if="selectedSpec" class="mt-4 p-4 info-block rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <div>
                         <div class="text-xs font-bold text-gray-400 uppercase tracking-wide">{{ t.selectedCardTitle }}</div>
@@ -100,7 +99,8 @@
                     </div>
                     <div class="sm:text-right">
                         <div class="text-xs text-gray-400 uppercase">{{ t.supervisorLabel }}</div>
-                        <div class="font-bold text-main">{{ selectedSpec.supervisor_name }}</div>
+                        <!-- ИСПРАВЛЕНО: Для студентов Оцениваемый руководитель — это Наставник -->
+                        <div class="font-bold text-main">{{ selectedSpec.has_split_roles ? selectedSpec.mentor_name : selectedSpec.supervisor_name }}</div>
                     </div>
                 </div>
             </div>
