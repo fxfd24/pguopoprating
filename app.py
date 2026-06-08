@@ -443,21 +443,28 @@ def init_db():
         # Переименовываем Каспарова в Каспарян в базе данных (сохраняя связи)
         cursor.execute("UPDATE supervisors SET name = 'Каспарян К.В.' WHERE name = 'Каспаров К.В.'")
         
-        # Находим ID удаляемой ОПОП
+        # УСИЛЕННЫЙ ВАРИАНТ: Находим все записи 38.02.02, где профиль не равен "-"
+        # Это защищает от скрытых пробелов или латинских букв в названии профиля
         cursor.execute("""
-            SELECT id FROM specialties 
-            WHERE code = '38.02.02' AND profile = 'Управление страховым бизнесом'
+            SELECT id, profile FROM specialties 
+            WHERE code = '38.02.02' AND profile != '-' AND profile IS NOT NULL AND profile != ''
         """)
-        target = cursor.fetchone()
-        if target:
-            spec_id = target['id']
-            # Удаляем связанные оценки, если они случайно были проставлены
-            cursor.execute("DELETE FROM student_votes WHERE specialty_id = ?", (spec_id,))
-            cursor.execute("DELETE FROM expert_votes WHERE specialty_id = ?", (spec_id,))
-            cursor.execute("DELETE FROM admin_votes WHERE specialty_id = ?", (spec_id,))
-            # Удаляем саму ОПОП из таблицы направлений
-            cursor.execute("DELETE FROM specialties WHERE id = ?", (spec_id,))
-            print("Миграция: ОПОП 'Управление страховым бизнесом' успешно удалена из БД.")
+        targets = cursor.fetchall()
+        
+        if targets:
+            for target in targets:
+                spec_id = target['id']
+                prof_name = target['profile']
+                # Удаляем связанные оценки, если они были
+                cursor.execute("DELETE FROM student_votes WHERE specialty_id = ?", (spec_id,))
+                cursor.execute("DELETE FROM expert_votes WHERE specialty_id = ?", (spec_id,))
+                cursor.execute("DELETE FROM admin_votes WHERE specialty_id = ?", (spec_id,))
+                # Удаляем саму ОПОП из таблицы направлений
+                cursor.execute("DELETE FROM specialties WHERE id = ?", (spec_id,))
+                print(f"Миграция: ОПОП '38.02.02' с профилем '{prof_name}' (ID: {spec_id}) и её оценки успешно удалены.")
+        else:
+            print("Миграция: Лишние профили для 38.02.02 уже удалены или не найдены.")
+            
         conn.commit()
     except Exception as e:
         print(f"Миграция (ошибка удаления/переименования): {e}")
