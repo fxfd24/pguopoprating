@@ -44,7 +44,6 @@ window.specialtyTranslations = {
     "Психология служебной деятельности": "Psychology of Interdepartmental Activity",
     "Психология безопасности": "Safety Psychology",
     "Психология безопасности, кадрового менеджмента и успешной профессиональной деятельности": "Psychology of Security, HR Management, and Professional Success",
-    "Управление страховым бизнесом": "Insurance Business Management",
     "Операционная деятельность в логистике": "Operational Activity in Logistics",
     "Управление логистическими процессами": "Logistics Process Management",
     "Конгрессно-выставочная деятельность": "Congress and Exhibition Activity",
@@ -306,7 +305,7 @@ const supervisorTranslations = {
     "Чубарева О.В.": "Chubareva O.V.",
     "Еремкина Н.В.": "Eremkina N.V.",
     "Линец С.И.": "Linets S.I.",
-    "Каспаров К.В.": "Kasparov K.V."
+    "Каспарян К.В.": "Kasparyan K.V."
 };
 
 window.translateSupervisor = (name, lang) => {
