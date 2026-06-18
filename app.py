@@ -869,6 +869,13 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
     report.append(f" Сводка: Деканы проголосовали: {voted_deans} из {total_deans} | Зав. кафедрами проголосовали: {voted_hods} из {total_hods}")
     report.append("=" * 80)
     
+    # Вспомогательная функция для форматирования списка оценок эксперта
+    def get_scores_str(scores):
+        if all(x is None for x in scores):
+            return "не оценивал"
+        # Выводим оценки, заменяя пропущенные (при разделении ролей) на прочерк "-"
+        return ", ".join(str(x) if x is not None else "-" for x in scores)
+    
     # 2. Деканы, которые еще не голосовали
     report.append("\n❌ ДЕКАНЫ, КОТОРЫЕ ЕЩЕ НЕ ОЦЕНИЛИ НИ ОДНО НАПРАВЛЕНИЕ:")
     cursor.execute("""
@@ -884,14 +891,16 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
         report.append("  🎉 Отлично! Все деканы проставили хотя бы одну оценку.")
         
     # 3. Деканы, которые проголосовали
-    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ДЕКАНОВ (КТО И КОГО ОЦЕНИЛ):")
+    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ДЕКАНОВ (С ВЫСТАВЛЕННЫМИ БАЛЛАМИ):")
     cursor.execute("""
-        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, sup.name as supervisor_name, 
+        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, 
+               sup.name as supervisor_name, ment.name as mentor_name,
                ev.nast_q1, ev.nast_q2, ev.nast_q3, ev.nast_q4,
                ev.admin_q1, ev.admin_q2, ev.admin_q3, ev.timestamp
         FROM expert_votes ev
         JOIN specialties s ON ev.specialty_id = s.id
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
         WHERE ev.role_type = 'dean'
         ORDER BY ev.evaluator_name, s.code
     """)
@@ -904,13 +913,22 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
         
         nast_scores = [vote['nast_q1'], vote['nast_q2'], vote['nast_q3'], vote['nast_q4']]
         admin_scores = [vote['admin_q1'], vote['admin_q2'], vote['admin_q3']]
-        filled_nast = sum(1 for x in nast_scores if x is not None)
-        filled_admin = sum(1 for x in admin_scores if x is not None)
         
+        nast_str = get_scores_str(nast_scores)
+        admin_str = get_scores_str(admin_scores)
+        
+        # Красиво выводим объединенных руководителей в случае разделения ролей
+        if vote['mentor_name'] and vote['mentor_name'] != vote['supervisor_name']:
+            display_sup = f"{vote['supervisor_name']} (Админ) / {vote['mentor_name']} (Наст)"
+        else:
+            display_sup = vote['supervisor_name']
+            
         profile_str = f" ({vote['profile']})" if vote['profile'] != '-' else ""
         report.append(f"     ▫️ {vote['code']} {vote['spec_name']}{profile_str}")
-        report.append(f"        Руководитель: {vote['supervisor_name']}")
-        report.append(f"        Оценено: Наставник ({filled_nast}/4 вопр.), Администратор ({filled_admin}/3 вопр.) | {vote['timestamp']}")
+        report.append(f"        Руководитель: {display_sup}")
+        report.append(f"        Оценки Наставника:      [{nast_str}]")
+        report.append(f"        Оценки Администратора:  [{admin_str}]")
+        report.append(f"        Дата сохранения:        {vote['timestamp']}")
         
     report.append("\n" + "-" * 80)
     
@@ -929,14 +947,16 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
         report.append("  🎉 Отлично! Все заведующие кафедрами проставили хотя бы одну оценку.")
         
     # 5. Зав. кафедрами, которые проголосовали
-    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ЗАВ. КАФЕДРАМИ (КТО И КОГО ОЦЕНИЛ):")
+    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ЗАВ. КАФЕДРАМИ (С ВЫСТАВЛЕННЫМИ БАЛЛАМИ):")
     cursor.execute("""
-        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, sup.name as supervisor_name, 
+        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, 
+               sup.name as supervisor_name, ment.name as mentor_name,
                ev.nast_q1, ev.nast_q2, ev.nast_q3, ev.nast_q4,
                ev.admin_q1, ev.admin_q2, ev.admin_q3, ev.timestamp
         FROM expert_votes ev
         JOIN specialties s ON ev.specialty_id = s.id
         JOIN supervisors sup ON s.supervisor_id = sup.id
+        LEFT JOIN supervisors ment ON s.mentor_id = ment.id
         WHERE ev.role_type = 'hod'
         ORDER BY ev.evaluator_name, s.code
     """)
@@ -949,19 +969,26 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
         
         nast_scores = [vote['nast_q1'], vote['nast_q2'], vote['nast_q3'], vote['nast_q4']]
         admin_scores = [vote['admin_q1'], vote['admin_q2'], vote['admin_q3']]
-        filled_nast = sum(1 for x in nast_scores if x is not None)
-        filled_admin = sum(1 for x in admin_scores if x is not None)
         
+        nast_str = get_scores_str(nast_scores)
+        admin_str = get_scores_str(admin_scores)
+        
+        if vote['mentor_name'] and vote['mentor_name'] != vote['supervisor_name']:
+            display_sup = f"{vote['supervisor_name']} (Админ) / {vote['mentor_name']} (Наст)"
+        else:
+            display_sup = vote['supervisor_name']
+            
         profile_str = f" ({vote['profile']})" if vote['profile'] != '-' else ""
         report.append(f"     ▫️ {vote['code']} {vote['spec_name']}{profile_str}")
-        report.append(f"        Руководитель: {vote['supervisor_name']}")
-        report.append(f"        Оценено: Наставник ({filled_nast}/4 вопр.), Администратор ({filled_admin}/3 вопр.) | {vote['timestamp']}")
+        report.append(f"        Руководитель: {display_sup}")
+        report.append(f"        Оценки Наставника:      [{nast_str}]")
+        report.append(f"        Оценки Администратора:  [{admin_str}]")
+        report.append(f"        Дата сохранения:        {vote['timestamp']}")
         
     report.append("\n" + "=" * 80)
     report.append("                           КОНЕЦ ОТЧЕТА")
     report.append("=" * 80)
     
-    # Склеиваем строки и добавляем BOM символ \ufeff для корректного отображения кириллицы в Блокноте на Windows
     full_report = "\ufeff" + "\n".join(report)
     
     return StreamingResponse(
@@ -969,5 +996,5 @@ def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str
         media_type="text/plain; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=debtors_report.txt"}
     )
-    
+
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
