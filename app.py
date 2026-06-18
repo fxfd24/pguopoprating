@@ -844,4 +844,130 @@ def export_csv(db: sqlite3.Connection = Depends(get_db), x_password: str = Heade
         headers={"Content-Disposition": "attachment; filename=opop_ratings.csv"}
     )
 
+@app.get("/api/admin/export/debtors_txt")
+def export_debtors_txt(db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
+    # Защита выгрузки аналитики
+    verify_admin_auth(x_password)
+    
+    cursor = db.cursor()
+    
+    # 1. Сбор общей статистики
+    cursor.execute("SELECT COUNT(*) FROM deans")
+    total_deans = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(DISTINCT evaluator_name) FROM expert_votes WHERE role_type = 'dean'")
+    voted_deans = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM hods")
+    total_hods = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(DISTINCT evaluator_name) FROM expert_votes WHERE role_type = 'hod'")
+    voted_hods = cursor.fetchone()[0]
+    
+    report = []
+    report.append("=" * 80)
+    report.append("             АНАЛИТИКА ГОЛОСОВАНИЯ ДЕКАНОВ И ЗАВ. КАФЕДРАМИ")
+    report.append("=" * 80)
+    report.append(f" Сводка: Деканы проголосовали: {voted_deans} из {total_deans} | Зав. кафедрами проголосовали: {voted_hods} из {total_hods}")
+    report.append("=" * 80)
+    
+    # 2. Деканы, которые еще не голосовали
+    report.append("\n❌ ДЕКАНЫ, КОТОРЫЕ ЕЩЕ НЕ ОЦЕНИЛИ НИ ОДНО НАПРАВЛЕНИЕ:")
+    cursor.execute("""
+        SELECT name FROM deans 
+        WHERE name NOT IN (SELECT DISTINCT evaluator_name FROM expert_votes WHERE role_type = 'dean')
+        ORDER BY name
+    """)
+    non_voting_deans = cursor.fetchall()
+    if non_voting_deans:
+        for idx, r in enumerate(non_voting_deans, 1):
+            report.append(f"  {idx}. {r['name']}")
+    else:
+        report.append("  🎉 Отлично! Все деканы проставили хотя бы одну оценку.")
+        
+    # 3. Деканы, которые проголосовали
+    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ДЕКАНОВ (КТО И КОГО ОЦЕНИЛ):")
+    cursor.execute("""
+        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, sup.name as supervisor_name, 
+               ev.nast_q1, ev.nast_q2, ev.nast_q3, ev.nast_q4,
+               ev.admin_q1, ev.admin_q2, ev.admin_q3, ev.timestamp
+        FROM expert_votes ev
+        JOIN specialties s ON ev.specialty_id = s.id
+        JOIN supervisors sup ON s.supervisor_id = sup.id
+        WHERE ev.role_type = 'dean'
+        ORDER BY ev.evaluator_name, s.code
+    """)
+    dean_votes = cursor.fetchall()
+    current_dean = None
+    for vote in dean_votes:
+        if vote['evaluator_name'] != current_dean:
+            current_dean = vote['evaluator_name']
+            report.append(f"\n  👤 Декан: {current_dean}")
+        
+        nast_scores = [vote['nast_q1'], vote['nast_q2'], vote['nast_q3'], vote['nast_q4']]
+        admin_scores = [vote['admin_q1'], vote['admin_q2'], vote['admin_q3']]
+        filled_nast = sum(1 for x in nast_scores if x is not None)
+        filled_admin = sum(1 for x in admin_scores if x is not None)
+        
+        profile_str = f" ({vote['profile']})" if vote['profile'] != '-' else ""
+        report.append(f"     ▫️ {vote['code']} {vote['spec_name']}{profile_str}")
+        report.append(f"        Руководитель: {vote['supervisor_name']}")
+        report.append(f"        Оценено: Наставник ({filled_nast}/4 вопр.), Администратор ({filled_admin}/3 вопр.) | {vote['timestamp']}")
+        
+    report.append("\n" + "-" * 80)
+    
+    # 4. Зав. кафедрами, которые еще не голосовали
+    report.append("\n❌ ЗАВ. КАФЕДРАМИ, КОТОРЫЕ ЕЩЕ НЕ ОЦЕНИЛИ НИ ОДНО НАПРАВЛЕНИЕ:")
+    cursor.execute("""
+        SELECT name FROM hods 
+        WHERE name NOT IN (SELECT DISTINCT evaluator_name FROM expert_votes WHERE role_type = 'hod')
+        ORDER BY name
+    """)
+    non_voting_hods = cursor.fetchall()
+    if non_voting_hods:
+        for idx, r in enumerate(non_voting_hods, 1):
+            report.append(f"  {idx}. {r['name']}")
+    else:
+        report.append("  🎉 Отлично! Все заведующие кафедрами проставили хотя бы одну оценку.")
+        
+    # 5. Зав. кафедрами, которые проголосовали
+    report.append("\n✅ ДЕТАЛЬНЫЙ СПИСОК ГОЛОСОВ ЗАВ. КАФЕДРАМИ (КТО И КОГО ОЦЕНИЛ):")
+    cursor.execute("""
+        SELECT ev.evaluator_name, s.code, s.name as spec_name, s.profile, sup.name as supervisor_name, 
+               ev.nast_q1, ev.nast_q2, ev.nast_q3, ev.nast_q4,
+               ev.admin_q1, ev.admin_q2, ev.admin_q3, ev.timestamp
+        FROM expert_votes ev
+        JOIN specialties s ON ev.specialty_id = s.id
+        JOIN supervisors sup ON s.supervisor_id = sup.id
+        WHERE ev.role_type = 'hod'
+        ORDER BY ev.evaluator_name, s.code
+    """)
+    hod_votes = cursor.fetchall()
+    current_hod = None
+    for vote in hod_votes:
+        if vote['evaluator_name'] != current_hod:
+            current_hod = vote['evaluator_name']
+            report.append(f"\n  👤 Зав. кафедрой: {current_hod}")
+        
+        nast_scores = [vote['nast_q1'], vote['nast_q2'], vote['nast_q3'], vote['nast_q4']]
+        admin_scores = [vote['admin_q1'], vote['admin_q2'], vote['admin_q3']]
+        filled_nast = sum(1 for x in nast_scores if x is not None)
+        filled_admin = sum(1 for x in admin_scores if x is not None)
+        
+        profile_str = f" ({vote['profile']})" if vote['profile'] != '-' else ""
+        report.append(f"     ▫️ {vote['code']} {vote['spec_name']}{profile_str}")
+        report.append(f"        Руководитель: {vote['supervisor_name']}")
+        report.append(f"        Оценено: Наставник ({filled_nast}/4 вопр.), Администратор ({filled_admin}/3 вопр.) | {vote['timestamp']}")
+        
+    report.append("\n" + "=" * 80)
+    report.append("                           КОНЕЦ ОТЧЕТА")
+    report.append("=" * 80)
+    
+    # Склеиваем строки и добавляем BOM символ \ufeff для корректного отображения кириллицы в Блокноте на Windows
+    full_report = "\ufeff" + "\n".join(report)
+    
+    return StreamingResponse(
+        iter([full_report]),
+        media_type="text/plain; charset=utf-8",
+        headers={"Content-Disposition": "attachment; filename=debtors_report.txt"}
+    )
+    
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

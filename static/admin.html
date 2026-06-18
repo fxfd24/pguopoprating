@@ -183,11 +183,17 @@
 
                         <div class="relative w-full sm:w-64">
                             <input type="text" 
-                                   v-model="searchQuery" 
-                                   placeholder="Код, ОПОП или Руководитель..." 
-                                   class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
+                                v-model="searchQuery" 
+                                placeholder="Код, ОПОП или Руководитель..." 
+                                class="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black text-sm">
                             <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-3 text-gray-400"></i>
                         </div>
+
+                        <!-- ДОБАВЛЯЕМ СЮДА НОВУЮ КНОПКУ -->
+                        <button @click="downloadDebtorsTXT" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-file-invoice text-base"></i>
+                            <span>Отчет по должникам (TXT)</span>
+                        </button>
 
                         <button @click="downloadCSV" class="bg-black text-white hover:bg-gray-900 px-5 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center space-x-1.5">
                             <i class="fa-solid fa-file-excel text-base"></i>

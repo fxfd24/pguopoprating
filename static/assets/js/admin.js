@@ -222,6 +222,32 @@ createApp({
             }
         };
 
+        const downloadDebtorsTXT = async () => {
+            const password = sessionStorage.getItem('admin_password');
+            try {
+                const response = await fetch('/api/admin/export/debtors_txt', {
+                    headers: { 'X-Password': password }
+                });
+                
+                if (response.status === 401) {
+                    alert("Сессия истекла или пароль не прошел проверку безопасности на сервере.");
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "debtors_report.txt";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (err) {
+                console.error("Ошибка скачивания текстового отчета:", err);
+                alert("Ошибка генерации отчета");
+            }
+        };
+
         const checkSavedSession = async () => {
             const savedPassword = window.authSession.get('admin');
             if (savedPassword) {
@@ -271,6 +297,7 @@ createApp({
             uniqueInstitutes,
             filteredRatings,
             downloadCSV,
+            downloadDebtorsTXT,
             resetConfirmPassword,
             showResetPassword,
             resetLoading,
