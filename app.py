@@ -504,75 +504,18 @@ def get_experts(db: sqlite3.Connection = Depends(get_db)):
 
 @app.post("/api/vote/student")
 def vote_student(data: StudentVote, db: sqlite3.Connection = Depends(get_db)):
-    cursor = db.cursor()
-    cursor.execute("""
-        INSERT INTO student_votes (specialty_id, q1, q2, q3, q4, q5)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (data.specialty_id, data.q1, data.q2, data.q3, data.q4, data.q5))
-    db.commit()
-    return {"status": "success"}
+    # Блокировка сохранения голосов
+    raise HTTPException(status_code=403, detail="Голосование завершено! Прием оценок закрыт.")
 
 @app.post("/api/vote/expert")
 def vote_expert(data: ExpertVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
-    verify_expert_auth(x_password)
-    
-    cursor = db.cursor()
-    
-    # ПРОВЕРКА И ЧАСТИЧНОЕ ОБНОВЛЕНИЕ СТРОКИ (UPDATE) ДЛЯ ИСКЛЮЧЕНИЯ ЗАТИРАНИЯ ГЛАСОВ ПРИ РАЗДЕЛЕНИИ
-    cursor.execute("""
-        SELECT id, nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3
-        FROM expert_votes
-        WHERE specialty_id = ? AND evaluator_name = ? AND role_type = ?
-    """, (data.specialty_id, data.evaluator_name, data.role_type))
-    
-    row = cursor.fetchone()
-    
-    if row:
-        vote_id = row[0]
-        # Если пришедшая оценка None, сохраняем старую оценку из базы данных
-        nast_q1 = data.nast_q1 if data.nast_q1 is not None else row[1]
-        nast_q2 = data.nast_q2 if data.nast_q2 is not None else row[2]
-        nast_q3 = data.nast_q3 if data.nast_q3 is not None else row[3]
-        nast_q4 = data.nast_q4 if data.nast_q4 is not None else row[4]
-        
-        admin_q1 = data.admin_q1 if data.admin_q1 is not None else row[5]
-        admin_q2 = data.admin_q2 if data.admin_q2 is not None else row[6]
-        admin_q3 = data.admin_q3 if data.admin_q3 is not None else row[7]
-        
-        cursor.execute("""
-            UPDATE expert_votes
-            SET nast_q1 = ?, nast_q2 = ?, nast_q3 = ?, nast_q4 = ?,
-                admin_q1 = ?, admin_q2 = ?, admin_q3 = ?
-            WHERE id = ?
-        """, (nast_q1, nast_q2, nast_q3, nast_q4, admin_q1, admin_q2, admin_q3, vote_id))
-    else:
-        # Записи нет -> сохраняем новую запись
-        cursor.execute("""
-            INSERT INTO expert_votes (
-                specialty_id, evaluator_name, role_type, 
-                nast_q1, nast_q2, nast_q3, nast_q4,
-                admin_q1, admin_q2, admin_q3
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            data.specialty_id, data.evaluator_name, data.role_type,
-            data.nast_q1, data.nast_q2, data.nast_q3, data.nast_q4,
-            data.admin_q1, data.admin_q2, data.admin_q3
-        ))
-        
-    db.commit()
-    return {"status": "success"}
+    # Блокировка сохранения голосов
+    raise HTTPException(status_code=403, detail="Голосование завершено! Прием оценок закрыт.")
 
 @app.post("/api/vote/admin")
 def vote_admin(data: AdminVote, db: sqlite3.Connection = Depends(get_db), x_password: str = Header(None)):
-    verify_manager_auth(x_password)
-    
-    cursor = db.cursor()
-    cursor.execute("""
-        INSERT OR REPLACE INTO admin_votes (specialty_id, k_sroki)
-        VALUES (?, ?)
-    """, (data.specialty_id, data.k_sroki))
-    db.commit()
-    return {"status": "success"}
+    # Блокировка сохранения голосов
+    raise HTTPException(status_code=403, detail="Голосование завершено! Прием оценок закрыт.")
 
 # ---- ПРОВЕРКА ПАРОЛЕЙ И АВТОРИЗАЦИЯ ----
 @app.post("/api/auth/verify")

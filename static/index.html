@@ -64,72 +64,76 @@
                     </p>
                 </div>
 
-                <!-- Сетка ролей -->
+                <!-- Сетка ролей (Все формы закрыты, кроме админки) -->
                 <div id="grid-parallax" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-entrance parallax-smooth" style="animation-delay: 0.15s;">
                     
-                    <!-- Карта: Студент (ИСПРАВЛЕНО: добавили glass-card-accent для выделения) -->
-                    <a href="/student.html" class="glass-card glass-card-accent glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                    <!-- Карта: Студент (НЕАКТИВНА) -->
+                    <div class="glass-card p-6 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 border-red-500/20 bg-red-50/5">
                         <div>
-                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
-                                <i class="fa-solid fa-user-graduate text-xl"></i>
+                            <div class="bg-red-100 text-red-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                                <i class="fa-solid fa-lock text-lg"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.studentTitle }}</h3>
+                            <h3 class="text-xl font-bold mb-1" style="color: var(--text-main)">{{ t.studentTitle }}</h3>
+                            <span class="text-xs font-bold text-red-600 uppercase tracking-wider block mb-3">Голосование завершено!</span>
                             <p class="text-sm leading-relaxed" style="color: var(--text-muted)">
                                 {{ t.studentDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-transform" style="color: var(--text-main)">
-                            {{ t.startBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        <span class="mt-6 text-sm font-semibold inline-flex items-center text-gray-400/70">
+                            {{ t.startBtn }} <i class="fa-solid fa-ban ml-2 text-xs"></i>
                         </span>
-                    </a>
+                    </div>
 
-                    <!-- Карта: Декан -->
-                    <a href="/expert.html?role=dean" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                    <!-- Карта: Декан (НЕАКТИВНА) -->
+                    <div class="glass-card p-6 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 border-red-500/20 bg-red-50/5">
                         <div>
-                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
-                                <i class="fa-solid fa-user-tie text-xl"></i>
+                            <div class="bg-red-100 text-red-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                                <i class="fa-solid fa-lock text-lg"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.deanTitle }}</h3>
+                            <h3 class="text-xl font-bold mb-1" style="color: var(--text-main)">{{ t.deanTitle }}</h3>
+                            <span class="text-xs font-bold text-red-600 uppercase tracking-wider block mb-3">Голосование завершено!</span>
                             <p class="text-sm leading-relaxed" style="color: var(--text-muted)">
                                 {{ t.deanDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-transform" style="color: var(--text-main)">
-                            {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        <span class="mt-6 text-sm font-semibold inline-flex items-center text-gray-400/70">
+                            {{ t.evaluateBtn }} <i class="fa-solid fa-ban ml-2 text-xs"></i>
                         </span>
-                    </a>
+                    </div>
 
-                    <!-- Карта: Зав. кафедрой -->
-                    <a href="/expert.html?role=hod" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                    <!-- Карта: Зав. кафедрой (НЕАКТИВНА) -->
+                    <div class="glass-card p-6 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 border-red-500/20 bg-red-50/5">
                         <div>
-                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
-                                <i class="fa-solid fa-chalkboard-user text-xl"></i>
+                            <div class="bg-red-100 text-red-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                                <i class="fa-solid fa-lock text-lg"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.hodTitle }}</h3>
+                            <h3 class="text-xl font-bold mb-1" style="color: var(--text-main)">{{ t.hodTitle }}</h3>
+                            <span class="text-xs font-bold text-red-600 uppercase tracking-wider block mb-3">Голосование завершено!</span>
                             <p class="text-sm leading-relaxed" style="color: var(--text-muted)">
                                 {{ t.hodDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-transform" style="color: var(--text-main)">
-                            {{ t.evaluateBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        <span class="mt-6 text-sm font-semibold inline-flex items-center text-gray-400/70">
+                            {{ t.evaluateBtn }} <i class="fa-solid fa-ban ml-2 text-xs"></i>
                         </span>
-                    </a>
+                    </div>
 
-                    <!-- Карта: Начальник управления -->
-                    <a href="/manager.html" class="glass-card glass-card-hover p-6 flex flex-col justify-between text-left group card-item transition-all duration-300">
+                    <!-- Карта: Начальник управления (НЕАКТИВНА) -->
+                    <div class="glass-card p-6 flex flex-col justify-between text-left relative overflow-hidden transition-all duration-300 border-red-500/20 bg-red-50/5">
                         <div>
-                            <div class="bg-gray-100 dark:bg-gray-800 text-black dark:text-white w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-colors duration-300 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black">
-                                <i class="fa-solid fa-sliders text-xl"></i>
+                            <div class="bg-red-100 text-red-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6">
+                                <i class="fa-solid fa-lock text-lg"></i>
                             </div>
-                            <h3 class="text-xl font-bold mb-2" style="color: var(--text-main)">{{ t.managerTitle }}</h3>
+                            <h3 class="text-xl font-bold mb-1" style="color: var(--text-main)">{{ t.managerTitle }}</h3>
+                            <span class="text-xs font-bold text-red-600 uppercase tracking-wider block mb-3">Голосование завершено!</span>
                             <p class="text-sm leading-relaxed" style="color: var(--text-muted)">
                                 {{ t.managerDesc }}
                             </p>
                         </div>
-                        <span class="mt-6 text-sm font-semibold inline-flex items-center group-hover:translate-x-1 transition-transform" style="color: var(--text-main)">
-                            {{ t.fillBtn }} <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                        <span class="mt-6 text-sm font-semibold inline-flex items-center text-gray-400/70">
+                            {{ t.fillBtn }} <i class="fa-solid fa-ban ml-2 text-xs"></i>
                         </span>
-                    </a>
+                    </div>
 
                 </div>
             </div>
